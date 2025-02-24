@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Quality Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            display: flex;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background: #333;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        .sidebar button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            border-radius: 5px;
+        }
+        .sidebar button:hover {
+            background: #555;
+        }
+        .content {
+            margin-left: 280px;
+            flex-grow: 1;
+            padding: 20px;
+        }
+        #fileInput {
+            display: none;
+        }
+        .map-container {
+            position: relative;
+            width: 80%;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        .map-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .dot {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: grey;
+            border: 2px solid black;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .dot.clicked {
+            background-color: black;
+            border: 2px solid white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <button onclick="showContent('about')">About this dataset</button>
+        <button onclick="showContent('parameters')">Water quality parameters</button>
+        <button onclick="showContent('visualization')">Visualization dashboard</button>
+        <button onclick="showContent('epa')">EPA Recommendations</button>
+        <button onclick="uploadDataset()">Upload dataset</button>
+        <input type="file" id="fileInput" accept=".csv">
+    </div>
+
+    <div class="content" id="main-content">
+        <h2>Welcome</h2>
+        <p>Select an option from the sidebar to get started.</p>
+    </div>
+
+    <script>
+        function showContent(section) {
+            const mainContent = document.getElementById("main-content");
+
+            if (section === "visualization") {
+                mainContent.innerHTML = `<h2>Visualization Dashboard</h2>
+                    <div class="map-container" id="mapContainer">
+                        <img src="Map.png" alt="Big Sioux River Watershed Map">
+                    </div>`;
+                addDots();
+            }
+        }
+
+        function addDots() {
+            const mapContainer = document.getElementById("mapContainer");
+
+            // Default dot positions (adjust as needed)
+            const dotPositions = [
+                { top: 100, left: 200 },
+                { top: 150, left: 300 },
+                { top: 200, left: 250 },
+                { top: 250, left: 400 },
+                { top: 300, left: 350 }
+            ];
+
+            dotPositions.forEach((pos, index) => {
+                let dot = document.createElement("div");
+                dot.classList.add("dot");
+                dot.style.top = `${pos.top}px`;
+                dot.style.left = `${pos.left}px`;
+                dot.setAttribute("data-index", index);
+                dot.addEventListener("click", toggleDot);
+                mapContainer.appendChild(dot);
+            });
+        }
+
+        function toggleDot(event) {
+            event.target.classList.toggle("clicked");
+        }
+
+        function uploadDataset() {
+            document.getElementById("fileInput").click();
+        }
+    </script>
+
+</body>
+</html>
