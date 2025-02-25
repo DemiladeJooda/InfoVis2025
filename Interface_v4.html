@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="initial_interface.css">
+    <title>Water Quality Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .hidden { display: none; }
+        .section { padding: 20px; border-top: 2px solid #ccc; }
+        .map-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+        .map-container img {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+        }
+        .map-button {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background-color: red;
+            border: 2px solid black;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .selected {
+            background-color: black !important;
+        }
+        .info-panel {
+            position: absolute;
+            top: 0;
+            right: 10px;
+            width: 250px;
+            height: 100%;
+            background: white;
+            border-left: 2px solid #ccc;
+            padding: 15px;
+            overflow-y: auto;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="content" id="main-content">
+        <div class="center-div">
+            <h1>Water Quality Data Visualization: A Runoff Pollutant Advisory</h1>
+        </div>
+        <div class="list-container">
+            <div class="list-div" onclick="toggleSection('about-content')">About Dataset</div>
+            <div class="list-div" onclick="toggleSection('parameters-content')">Water Quality Parameters</div>
+            <div class="list-div" onclick="toggleSection('visualization-content')">Visualization Dashboard</div>
+            <div class="list-div" onclick="toggleSection('epa-content')">EPA Recommendations</div>
+            <div class="list-div" onclick="uploadDataset()">Upload</div>
+            <input type="file" id="fileInput" accept=".csv, .css" onchange="handleFileUpload(event)" style="display: none;">
+        </div>
+        
+        <div id="about-content" class="hidden section">
+            <h2>About this dataset</h2>
+            <p>This dataset provides water quality measurements for various locations within the Big Sioux River Watershed. The data includes key parameters such as pH levels, dissolved oxygen, turbidity, and the presence of pollutants. Understanding these factors is essential for assessing water health and making informed decisions regarding conservation efforts.</p>
+        </div>
+        <div id="parameters-content" class="hidden section">
+            <h2>Water Quality Parameters</h2>
+            <p>Details on water quality measurement parameters.</p>
+        </div>
+        <div id="visualization-content" class="hidden section">
+            <h2>Visualization Dashboard</h2>
+            <div class="map-container" id="mapContainer">
+                <img src="Map.png" alt="Big Sioux River Watershed Map">
+                <div class="map-button" style="top: 20%; left: 30%;" onclick="selectButton(0)">1</div>
+                <div class="map-button" style="top: 40%; left: 50%;" onclick="selectButton(1)">2</div>
+                <div class="map-button" style="top: 60%; left: 70%;" onclick="selectButton(2)">3</div>
+                <div class="map-button" style="top: 30%; left: 80%;" onclick="selectButton(3)">4</div>
+                <div class="map-button" style="top: 50%; left: 20%;" onclick="selectButton(4)">5</div>
+            </div>
+            <div class="info-panel" id="infoPanel"></div>
+        </div>
+        <div id="epa-content" class="hidden section">
+            <h2>EPA Recommendations</h2>
+            <p>Guidelines and recommendations from the EPA.</p>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                if (section.id === sectionId) {
+                    section.classList.toggle('hidden');
+                } else {
+                    section.classList.add('hidden');
+                }
+            });
+        }
+
+        function uploadDataset() {
+            document.getElementById("fileInput").click();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                alert(`File uploaded: ${file.name}`);
+                // Additional processing can be added here
+            }
+        }
+
+        function selectButton(index) {
+            document.querySelectorAll('.map-button').forEach((button, i) => {
+                if (i === index) {
+                    button.classList.add('selected');
+                } else {
+                    button.classList.remove('selected');
+                }
+            });
+            showInfo(index);
+        }
+
+        function showInfo(index) {
+            const infoPanel = document.getElementById('infoPanel');
+            const infoData = [
+                'Location 1: High pH levels detected.',
+                'Location 2: Dissolved oxygen levels optimal.',
+                'Location 3: Turbidity slightly above safe threshold.',
+                'Location 4: Pollutant presence noted, needs monitoring.',
+                'Location 5: Overall water quality satisfactory.'
+            ];
+            infoPanel.innerHTML = `<h3>Site Information</h3><p>${infoData[index]}</p>`;
+            infoPanel.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
