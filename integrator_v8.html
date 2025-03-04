@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="initial_interface.css">
+    <title>Water Quality Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .hidden { display: none; }
+        .section { padding: 20px; border-top: 2px solid #ccc; }
+        h2 { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="content" id="main-content">
+        <div class="center-div">
+            <h1>Water Quality Data Visualization: A Runoff Pollutant Advisory</h1>
+        </div>
+        <div class="list-container">
+            <div class="list-div" onclick="toggleSection('about-content')">About Dataset</div>
+            <div class="list-div" onclick="toggleSection('parameters-content')">Water Quality Parameters</div>
+            <div class="list-div" onclick="location.href='visualizations.html'">Visualization Dashboard</div>
+            <div class="list-div" onclick="toggleSection('epa-content')">EPA Recommendations</div>
+            <div class="list-div" onclick="uploadDataset()">Upload</div>
+            <input type="file" id="fileInput" accept=".csv, .css" onchange="handleFileUpload(event)" style="display: none;">
+        </div>
+        
+        <div id="about-content" class="hidden section">
+            <h2>About this dataset</h2>
+            <p>
+                This dataset provides water quality measurements for various locations within the Big Sioux River Watershed.
+                The data includes key parameters such as pH levels, dissolved oxygen, turbidity, and the presence of pollutants.
+                Understanding these factors is essential for assessing water health and making informed decisions regarding conservation efforts.
+            </p>
+        </div>
+
+        <div id="parameters-content" class="hidden section">
+            <h2>Water Quality Parameters</h2>
+            <p>Details on water quality measurement parameters.</p>
+        </div>
+
+        <div id="epa-content" class="hidden section">
+            <h2>EPA Recommendations</h2>
+            <p>Guidelines and recommendations from the EPA.</p>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        function uploadDataset() {
+            document.getElementById("fileInput").click();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const csvData = e.target.result.split('\n').map(row => row.split(','));
+                console.log("CSV Data Uploaded:", csvData); // You can expand this to handle the data later
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>

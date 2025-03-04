@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Water Quality Visualizations</title>
     <link rel="stylesheet" href="initial_interface.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         * {
             margin: 0;
@@ -19,7 +20,7 @@
 
         h2 {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .charts-container {
@@ -32,21 +33,34 @@
 
         .chart-box {
             background-color: #fff;
-            padding: 40px;
+            padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            width: 500px;
-            height: 350px;
+            width: 450px;
+            height: 375px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
         }
 
         .placeholder-text {
             color: #888;
             font-size: 22px;
+        }
+        .chart-image {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -56,28 +70,51 @@
 
     <div class="charts-container">
         <div class="chart-box">
-            <h3>Map here maybe?</h3>
-            <div class="placeholder-text">Input Python Chart or Map</div>
+            <h3>Interactive Map</h3>
+            <div id="map"></div>
         </div>
         <div class="chart-box">
-            <h3>pH Levels</h3>
-            <div class="placeholder-text">Input Python Chart</div>
+            <img src="./images/chart1.png" alt="Time Series Chart" class="chart-image">
         </div>
         <div class="chart-box">
-            <h3>Dissolved Oxygen</h3>
-            <div class="placeholder-text">Input Python Chart</div>
+            <img src="./images/chart2.png" alt="Time Series Chart" class="chart-image">
+        </div><div class="chart-box">
+            <img src="./images/chart3.png" alt="Time Series Chart" class="chart-image">
+        </div><div class="chart-box">
+            <img src="./images/chart4.png" alt="Time Series Chart" class="chart-image">
+        </div><div class="chart-box">
+            <img src="./images/chart5.png" alt="Time Series Chart" class="chart-image">
         </div>
-        <div class="chart-box">
-            <h3>Turbidity</h3>
-            <div class="placeholder-text">Input Python Chart</div>
-        </div>
-        <div class="chart-box">
-            <h3>Pollutant Levels</h3>
-            <div class="placeholder-text">Input Python Chart</div>
-        </div>
-        
-        
     </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map', {
+            preferCanvas: true,
+            zoomAnimation: false,
+            inertia: true
+        }).setView([43.5, -96.7], 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            detectRetina: true,
+            maxZoom: 18,
+        }).addTo(map);
+
+        var locations = [
+            { name: "Big Sioux River and I-90", coords: [43.610255, -96.744512] },
+            { name: "Big Sioux River @ Timberline", coords: [43.599904, -96.653107] },
+            { name: "Big Sioux River @ BAhson", coords: [43.569820, -96.684398] },
+            { name: "Skunk Creek @ Marion Road", coords: [43.533928, -96.791001] },
+            { name: "Big Sioux @ Falls Park", coords: [43.557252, -96.722152] }
+        ];
+
+        locations.forEach((location, index) => {
+            L.marker(location.coords)
+                .addTo(map)
+                .bindPopup(`<b>${location.name}</b><br>Location ${index + 1}`);
+        });
+    </script>
 
 </body>
 </html>
