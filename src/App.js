@@ -1,11 +1,11 @@
 import './App.css';
 
-
+//Functions in Components
 function toggleSection(sectionId) {
   document.querySelectorAll('.section').forEach(section => {
-      section.classList.add('hidden');
+      section.setAttribute('style', 'display: none');
   });
-  document.getElementById(sectionId).classList.remove('hidden');
+  document.getElementById(sectionId).style.display = 'block';
 }
 
 function uploadDataset() {
@@ -23,6 +23,7 @@ function handleFileUpload(e) {
   reader.readAsText(file);
 }
 
+//Main Webpage Body
 function App() {
   return (
     <div className="App">
@@ -35,10 +36,10 @@ function App() {
             <div className="list-div" onClick="location.href='visualizations.html'">Visualization Dashboard</div>
             <div className="list-div" onClick={() => toggleSection('epa-content')}>EPA Recommendations</div>
             <div className="list-div" onClick={() => uploadDataset()}>Upload</div>
-            <input type="file" onchange={() => handleFileUpload} classNameName='list-div'/>
+            <input type="file" onchange={() => handleFileUpload} className='list-div'/>
         </div>
 
-        <div id="about-content" className="hidden section">
+        <div id="about-content" className="section">
             <h2>About this dataset</h2>
             <p>
                 This dataset provides water quality measurements for various locations within the Big Sioux River Watershed.
@@ -47,12 +48,12 @@ function App() {
             </p>
         </div>
 
-        <div id="parameters-content" className="hidden section">
+        <div id="parameters-content" className="section">
             <h2>Water Quality Parameters</h2>
             <p>Details on water quality measurement parameters.</p>
         </div>
 
-        <div id="epa-content" className="hidden section">
+        <div id="epa-content" className="section">
             <h2>EPA Recommendations</h2>
             <p>Guidelines and recommendations from the EPA.</p>
         </div>

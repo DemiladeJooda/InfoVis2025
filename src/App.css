@@ -37,6 +37,6 @@ body {
 
 #fileInput { display: none; }
 
-.section { padding: 20px; border-top: 2px solid #ccc; }
+.section { padding: 20px; border-top: 2px solid #ccc; display: none }
 
 h2 { text-align: center; }
