@@ -48,9 +48,9 @@ function App() {
             <div className="list-div" onClick={() => toggleSection('parameters-content')}>Water Quality Parameters</div>
             <div className="list-div" onClick="location.href='visualizations.html'">Visualization Dashboard</div>
             <div className="list-div" onClick={() => toggleSection('epa-content')}>EPA Recommendations</div>
-            <div className="list-div">
+            <label className="list-div">
               <HiddenInput type='file' onChange={() => handleFileUpload}/>
-              Upload</div>
+              Upload</label>
         </div>
 
         <div id="about-content" className="section">
