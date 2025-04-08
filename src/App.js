@@ -1,4 +1,17 @@
 import './App.css';
+import { styled } from '@mui/material/styles'
+//create hidden input
+const HiddenInput = styled('input')({
+  clip: 'rect(0,0,0,0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+})
 
 //Functions in Components
 function toggleSection(sectionId) {
@@ -22,7 +35,7 @@ function handleFileUpload(e) {
   };
   reader.readAsText(file);
 }
-
+//<input type="file" onchange={() => handleFileUpload} className='list-div'/>
 //Main Webpage Body
 function App() {
   return (
@@ -35,8 +48,9 @@ function App() {
             <div className="list-div" onClick={() => toggleSection('parameters-content')}>Water Quality Parameters</div>
             <div className="list-div" onClick="location.href='visualizations.html'">Visualization Dashboard</div>
             <div className="list-div" onClick={() => toggleSection('epa-content')}>EPA Recommendations</div>
-            <div className="list-div" onClick={() => uploadDataset()}>Upload</div>
-            <input type="file" onchange={() => handleFileUpload} className='list-div'/>
+            <div className="list-div">
+              <HiddenInput type='file' onChange={() => handleFileUpload}/>
+              Upload</div>
         </div>
 
         <div id="about-content" className="section">
