@@ -1,15 +1,20 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './Home';
 import Dashboard from './Dashboard';
-import Home from './Home'
-import { Routes, Route } from 'react-router-dom';
+import './App.css';
 
-//Main Webpage Body
-export default function App() {
-  //The Main App Provides Navigation between our main page and the dashboard page
+function App() {
   return (
+    <Router>
+      <div className="App">
         <Routes>
-          <Route path='/' element={<Home/>}/>
-          <Route path='/dashboard' element={<Dashboard/>} />
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
+      </div>
+    </Router>
   );
 }
 
+export default App;

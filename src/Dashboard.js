@@ -1,62 +1,199 @@
-import './Dashboard.css'
-import { MapContainer, Marker, Popup, TileLayer} from 'react-leaflet';
-import markerIcon from "../node_modules/leaflet/dist/images/marker-icon.png"
-import L, { marker } from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-const Dashboard = () =>{
+import React, { useState } from 'react';
+import Plot from 'react-plotly.js';
+import './Dashboard.css';
 
-    const icon = new L.Icon({
-        iconUrl: markerIcon,
-        iconRetinaUrl: markerIcon,
-        popupAnchor: [-0,-0],
-        iconSize: [21,30]
-    })
+function Dashboard() {
+  const [csvFile, setCsvFile] = useState(null);
+  const [availableParams, setAvailableParams] = useState([]);
+  const [availableLocations, setAvailableLocations] = useState([]);
+  const [selectedVisType, setSelectedVisType] = useState('time_series');
+  const [selectedParam, setSelectedParam] = useState('');
+  const [selectedLocations, setSelectedLocations] = useState([]);
+  const [plotData, setPlotData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-    var locations = [
-        { name: "Big Sioux River and I-90", coords: [43.610255, -96.744512] },
-        { name: "Big Sioux River @ Timberline", coords: [43.599904, -96.653107] },
-        { name: "Big Sioux River @ BAhson", coords: [43.569820, -96.684398] },
-        { name: "Skunk Creek @ Marion Road", coords: [43.533928, -96.791001] },
-        { name: "Big Sioux @ Falls Park", coords: [43.557252, -96.722152] }
-    ];
+  // Reset visualization and selections
+  const resetVisualization = () => {
+    setPlotData(null);
+    setSelectedParam('');
+    setSelectedLocations([]);
+  };
 
-    return (
-        <div>
-            <h2>Visualization Dashboard</h2>
+  // Handle file upload
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    setCsvFile(file);
+    
+    // Parse CSV to get parameters and locations
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const csvText = e.target.result;
+      const lines = csvText.split('\n');
+      const headers = lines[0].split(',');
+      
+      // Extract parameter names (exclude metadata fields)
+      const excludeFields = ['OBJECTID', 'SampleDate', 'Location', 'LocationID', 'GlobalID', 'Latitude', 'Longitude', 'FrozenOver'];
+      const params = headers.filter(h => !excludeFields.includes(h.trim()));
+      setAvailableParams(params);
+      
+      // Extract location IDs
+      if (lines.length > 1) {
+        const locationIndex = headers.findIndex(h => h.trim() === 'LocationID');
+        if (locationIndex >= 0) {
+          const locationSet = new Set();
+          for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(',');
+            if (cols[locationIndex]) {
+              locationSet.add(cols[locationIndex].trim());
+            }
+          }
+          setAvailableLocations(Array.from(locationSet));
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
 
-            <div className="charts-container">
-                <div className="chart-box">
-                    <h3>Interactive Map</h3>
-                    <MapContainer id='map' center={[43.5, -96.7]} zoom={10} preferCanvas={true} zoomAnimation={false} inertia={true}>
-                        <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        detectRetina={true}
-                        maxZoom={18}/>
-                        {locations.map((marker,index) => (
-                            <Marker position={marker.coords} icon={icon}>
-                                <Popup>{marker.name}<br/>
-                                Location {index + 1}</Popup>
-                            </Marker>
-                        ))}
-                    </MapContainer>
-                </div>
-                <div className="chart-box">
-                    <img src="./images/chart1.png" alt="Time Series Chart" className="chart-image"/>
-                </div>
-                <div className="chart-box">
-                    <img src="./images/chart2.png" alt="Time Series Chart" className="chart-image"/>
-                </div><div className="chart-box">
-                    <img src="./images/chart3.png" alt="Time Series Chart" className="chart-image"/>
-                </div><div className="chart-box">
-                    <img src="./images/chart4.png" alt="Time Series Chart" className="chart-image"/>
-                </div><div className="chart-box">
-                    <img src="./images/chart5.png" alt="Time Series Chart" className="chart-image"/>
-                </div>
+  // Visualization type options
+  const visTypes = [
+    { value: 'time_series', label: 'Time Series' },
+    { value: 'parameter_comparison', label: 'Parameter Comparison' },
+    { value: 'location_comparison', label: 'Location Comparison' },
+    { value: 'map_view', label: 'Map View' },
+    { value: 'correlation_matrix', label: 'Correlation Matrix' },
+    { value: 'box_plots', label: 'Box Plots' },
+    { value: 'threshold_analysis', label: 'Threshold Analysis' },
+    { value: 'seasonal_analysis', label: 'Seasonal Analysis' }
+  ];
+
+  // Request visualization from backend
+  const generateVisualization = async () => {
+    if (!csvFile || (selectedVisType !== 'correlation_matrix' && 
+                     selectedVisType !== 'map_view' && !selectedParam)) {
+      alert('Please select a file, visualization type, and parameter (if required)');
+      return;
+    }
+    
+    setLoading(true);
+    
+    const formData = new FormData();
+    formData.append('csv_file', csvFile);
+    formData.append('vis_type', selectedVisType);
+    formData.append('parameter', selectedParam);
+    formData.append('location_filter', JSON.stringify(selectedLocations));
+    
+    try {
+      const response = await fetch('http://localhost:5050/api/visualize', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Server responded with ${response.status}: ${text}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setPlotData(JSON.parse(result.plotlyData));
+      } else {
+        alert('Error generating visualization: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Fetch failed: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="dashboard-container">
+      <h1>Water Quality Dashboard</h1>
+      
+      <div className="upload-section">
+        <h2>1. Upload Data</h2>
+        <input type="file" accept=".csv" onChange={handleFileUpload} />
+      </div>
+      
+      {csvFile && (
+        <div className="visualization-controls">
+          <h2>2. Select Visualization</h2>
+          
+          <div className="control-group">
+            <label>Visualization Type:</label>
+            <select value={selectedVisType} onChange={e => setSelectedVisType(e.target.value)}>
+              {visTypes.map(type => (
+                <option key={type.value} value={type.value}>{type.label}</option>
+              ))}
+            </select>
+          </div>
+          
+          {selectedVisType !== 'correlation_matrix' && selectedVisType !== 'map_view' && (
+            <div className="control-group">
+              <label>Parameter:</label>
+              <select value={selectedParam} onChange={e => setSelectedParam(e.target.value)}>
+                <option value="">Select Parameter</option>
+                {availableParams.map(param => (
+                  <option key={param} value={param}>{param}</option>
+                ))}
+              </select>
             </div>
-
+          )}
+          
+          <div className="control-group">
+            <label>Filter Locations (optional):</label>
+            <div className="location-checkboxes">
+              {availableLocations.map(loc => (
+                <label key={loc} className="location-checkbox">
+                  <input
+                    type="checkbox"
+                    value={loc}
+                    checked={selectedLocations.includes(loc)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedLocations([...selectedLocations, loc]);
+                      } else {
+                        setSelectedLocations(selectedLocations.filter(l => l !== loc));
+                      }
+                    }}
+                  />
+                  {loc}
+                </label>
+              ))}
+            </div>
+          </div>
+          
+          <button onClick={generateVisualization} disabled={loading}>
+            {loading ? 'Generating...' : 'Generate Visualization'}
+          </button>
         </div>
-    )
+      )}
+      
+      <div className="visualization-display">
+        {plotData && (
+          <>
+            <div className="plot-container">
+              <Plot
+                data={plotData.data}
+                layout={plotData.layout}
+                config={{ responsive: true }}
+                style={{ width: '100%', height: '600px' }}
+              />
+            </div>
+            <div className="visualization-controls">
+              <button 
+                onClick={resetVisualization} 
+                className="reset-button">
+                Create New Visualization
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default Dashboard;

@@ -1,0 +1,824 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import plotly.express as px
+import seaborn as sns
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import base64
+from io import BytesIO
+
+def process_uploaded_csv(file_content):
+    """Process the uploaded CSV file and return a pandas DataFrame"""
+    df = pd.read_csv(BytesIO(file_content))
+    # Clean column names (remove spaces, special characters)
+    df.columns = df.columns.str.strip()
+    # Convert SampleDate to datetime if it exists
+    if 'SampleDate' in df.columns:
+        df['SampleDate'] = pd.to_datetime(df['SampleDate'], errors='coerce')
+    return df
+
+# Main visualization function that will be called based on user selection
+def generate_visualization(df, vis_type, parameter=None, location_filter=None):
+    """
+    Generate visualizations based on user selection
+    
+    Parameters:
+    - df: pandas DataFrame with water quality data
+    - vis_type: type of visualization to generate
+    - parameter: water quality parameter to visualize
+    - location_filter: filter for specific locations
+    
+    Returns:
+    - encoded_fig: base64 encoded image of the visualization
+    - or fig: plotly figure object for interactive visualizations
+    """
+    
+    # Filter by location if specified
+    if location_filter and 'LocationID' in df.columns:
+        df = df[df['LocationID'].isin(location_filter)]
+    
+    if vis_type == "time_series":
+        return time_series_visualization(df, parameter)
+    elif vis_type == "parameter_comparison":
+        return parameter_comparison(df, parameter)
+    elif vis_type == "location_comparison":
+        return location_comparison(df, parameter)
+    elif vis_type == "map_view":
+        return map_visualization(df, parameter)
+    elif vis_type == "correlation_matrix":
+        return correlation_matrix(df)
+    elif vis_type == "box_plots":
+        return box_plots(df, parameter)
+    elif vis_type == "threshold_analysis":
+        return threshold_analysis(df, parameter)
+    elif vis_type == "seasonal_analysis":
+        return seasonal_analysis(df, parameter)
+    else:
+        return None
+
+
+# Modified Time Series Visualization
+def time_series_visualization(df, parameter):
+    """Generate time series visualization for a specific parameter"""
+    if 'SampleDate' not in df.columns or parameter not in df.columns:
+        return None
+    
+    # Make a copy of the dataframe to avoid SettingWithCopyWarning
+    plot_df = df.copy()
+    
+    # Ensure data is properly sorted by date and location
+    plot_df = plot_df.sort_values(['LocationID', 'SampleDate'])
+    
+    # Identify gaps in time series that are larger than expected
+    # This helps prevent incorrect line connections
+    plot_df['date_diff'] = plot_df.groupby('LocationID')['SampleDate'].diff().dt.days
+    
+    # Create a group identifier that changes when there's a large gap
+    # This will create separate traces for disconnected segments
+    gap_threshold = 60  # Gap threshold in days (adjust as needed)
+    plot_df['segment'] = (plot_df['date_diff'] > gap_threshold).cumsum()
+    plot_df['group'] = plot_df['LocationID'].astype(str) + '_' + plot_df['segment'].astype(str)
+    
+    # Create a plotly figure with improved settings
+    fig = px.line(
+        plot_df, 
+        x='SampleDate', 
+        y=parameter, 
+        color='LocationID',
+        title=f'{parameter} Over Time by Location',
+        labels={parameter: parameter, 'SampleDate': 'Date'},
+        line_shape='linear',  # Use linear connections between points
+        render_mode='svg'  # Use SVG for crisper lines
+    )
+    
+    # Explicitly do not connect gaps
+    fig.update_traces(
+        connectgaps=False,
+        line=dict(width=2)  # Thicker lines for better visibility
+    )
+    
+    # Improve the layout
+    fig.update_layout(
+        xaxis_title='Date',
+        yaxis_title=parameter,
+        legend_title='Location ID',
+        template='plotly_white',
+        autosize=True,
+        height=600,  # Fixed height for better proportions
+        width=1000,  # Fixed width for better proportions
+        margin=dict(l=60, r=60, t=80, b=80),
+        legend=dict(
+            orientation="v",
+            yanchor="top",
+            y=0.99,
+            xanchor="right",
+            x=1.15
+        ),
+        font=dict(
+            family="Arial, sans-serif",
+            size=14  # Larger font for better readability
+        ),
+        plot_bgcolor='white'  # Ensure white background for clarity
+    )
+    
+    # Improve date formatting on x-axis
+    fig.update_xaxes(
+        tickformat="%Y-%m-%d",
+        tickangle=45,
+        tickmode='auto',
+        nticks=10,
+        gridcolor='lightgray',  # Lighter grid for better contrast
+        linewidth=1,  # Thicker axis lines
+        linecolor='black'  # Black axis lines for clarity
+    )
+    
+    # Ensure y-axis starts from zero if appropriate for the parameter
+    fig.update_yaxes(
+        rangemode='tozero',
+        gridcolor='lightgray',  # Lighter grid for better contrast
+        linewidth=1,  # Thicker axis lines
+        linecolor='black'  # Black axis lines for clarity
+    )
+    
+    return fig
+
+
+# Parameter Comparison - Optimized
+def parameter_comparison(df, parameters):
+    """Compare multiple parameters across locations"""
+    if not isinstance(parameters, list):
+        parameters = [parameters]
+    
+    # Filter for only the selected parameters
+    params_df = df[['LocationID', 'SampleDate'] + parameters]
+    
+    # Create subplots - one for each parameter
+    fig = make_subplots(rows=len(parameters), cols=1, 
+                        shared_xaxes=True,
+                        subplot_titles=parameters,
+                        vertical_spacing=0.1)  # Increased spacing for clarity
+    
+    colors = px.colors.qualitative.Bold  # Using a bolder color scheme
+    location_ids = df['LocationID'].unique()
+    
+    for i, param in enumerate(parameters):
+        for j, location in enumerate(location_ids):
+            loc_data = params_df[params_df['LocationID'] == location]
+            # Sort data by date to ensure proper line connections
+            loc_data = loc_data.sort_values('SampleDate')
+            
+            fig.add_trace(
+                go.Scatter(
+                    x=loc_data['SampleDate'],
+                    y=loc_data[param],
+                    mode='lines+markers',
+                    name=f'{location} - {param}',
+                    legendgroup=location,
+                    marker=dict(color=colors[j % len(colors)], size=8),  # Larger markers
+                    line=dict(width=2, shape='linear'),  # Thicker, linear lines
+                    showlegend=(i == 0)  # Only show in legend for first parameter
+                ),
+                row=i+1, col=1
+            )
+    
+    fig.update_layout(
+        height=300 * len(parameters),
+        width=1000,  # Fixed width for better proportions
+        title_text="Parameter Comparison Across Locations",
+        legend_title="Location ID",
+        template='plotly_white',
+        autosize=False,  # Disable autosize for consistent rendering
+        margin=dict(l=60, r=60, t=80, b=80),
+        font=dict(
+            family="Arial, sans-serif",
+            size=14  # Larger font for better readability
+        ),
+        plot_bgcolor='white'  # Ensure white background for clarity
+    )
+    
+    # Update all xaxes
+    fig.update_xaxes(
+        tickformat="%Y-%m-%d",
+        tickangle=45,
+        gridcolor='lightgray',
+        linewidth=1,
+        linecolor='black'
+    )
+    
+    # Update all yaxes
+    fig.update_yaxes(
+        gridcolor='lightgray',
+        linewidth=1,
+        linecolor='black'
+    )
+    
+    return fig
+
+
+# Location Comparison - Optimized
+def location_comparison(df, parameter):
+    """Compare a parameter across different locations"""
+    if parameter not in df.columns or 'LocationID' not in df.columns:
+        return None
+    
+    # Group by location and calculate stats
+    location_stats = df.groupby('LocationID')[parameter].agg(['mean', 'std', 'min', 'max']).reset_index()
+    
+    # Create the comparison bar chart
+    fig = px.bar(location_stats, x='LocationID', y='mean', 
+                error_y='std',
+                color='LocationID',
+                labels={'mean': f'Mean {parameter}', 'LocationID': 'Location ID'},
+                title=f'{parameter} Comparison by Location',
+                color_discrete_sequence=px.colors.qualitative.Bold)  # Bolder colors
+    
+    # Add min/max as markers
+    for i, row in location_stats.iterrows():
+        fig.add_trace(go.Scatter(
+            x=[row['LocationID'], row['LocationID']],
+            y=[row['min'], row['max']],
+            mode='markers',
+            marker=dict(symbol=['triangle-down', 'triangle-up'], size=12, line=dict(width=1, color='black')),  # Larger markers with outline
+            name=f"{row['LocationID']} Min/Max",
+            showlegend=False
+        ))
+    
+    fig.update_layout(
+        xaxis_title='Location ID',
+        yaxis_title=f'{parameter} Value',
+        template='plotly_white',
+        autosize=False,
+        width=1000,
+        height=600,
+        margin=dict(l=60, r=60, t=80, b=80),
+        font=dict(
+            family="Arial, sans-serif",
+            size=14
+        ),
+        plot_bgcolor='white',
+        bargap=0.3  # Adjust bar spacing
+    )
+    
+    # Update axes
+    fig.update_xaxes(
+        gridcolor='lightgray',
+        linewidth=1,
+        linecolor='black',
+        type='category'  # Ensure categorical x-axis
+    )
+    
+    fig.update_yaxes(
+        gridcolor='lightgray',
+        linewidth=1,
+        linecolor='black',
+        rangemode='tozero'  # Start from zero
+    )
+    
+    return fig
+
+
+# Map Visualization - Optimized
+def map_visualization(df, parameter):
+    """Create a map visualization of the parameter across different locations"""
+    if 'Latitude' not in df.columns or 'Longitude' not in df.columns:
+        return None
+    
+    # Aggregate data by location for the selected parameter
+    if parameter:
+        map_data = df.groupby(['LocationID', 'Latitude', 'Longitude'])[parameter].mean().reset_index()
+        
+        # Create a map
+        fig = px.scatter_mapbox(map_data, 
+                               lat='Latitude', 
+                               lon='Longitude', 
+                               color=parameter,
+                               size=parameter,
+                               hover_name='LocationID',
+                               zoom=10,
+                               mapbox_style='carto-positron',  # Cleaner map style
+                               color_continuous_scale=px.colors.sequential.Viridis,  # Better color scale
+                               title=f'Map View of {parameter} by Location')
+        
+        # Adjust marker appearance
+        fig.update_traces(
+            marker=dict(
+                sizemin=10,  # Minimum marker size
+                sizeref=0.1,  # Adjust size scaling
+                sizemode='area',
+                opacity=0.8,  # Slightly transparent
+                line=dict(width=1, color='black')  # Add outline
+            )
+        )
+    else:
+        # Just show locations without parameter data
+        map_data = df[['LocationID', 'Latitude', 'Longitude']].drop_duplicates()
+        
+        fig = px.scatter_mapbox(map_data,
+                               lat='Latitude',
+                               lon='Longitude',
+                               hover_name='LocationID',
+                               zoom=10,
+                               mapbox_style='carto-positron',
+                               title='Sampling Locations Map')
+        
+        # Adjust marker appearance
+        fig.update_traces(
+            marker=dict(
+                size=15,
+                opacity=0.8,
+                line=dict(width=1, color='black')
+            )
+        )
+    
+    fig.update_layout(
+        height=700,
+        width=1000,
+        autosize=False,
+        margin=dict(l=0, r=0, t=50, b=0),  # Reduce margins for maps
+        font=dict(
+            family="Arial, sans-serif",
+            size=14
+        )
+    )
+    
+    return fig
+
+
+# Correlation Matrix - Optimized
+def correlation_matrix(df):
+    """Generate a correlation matrix for water quality parameters"""
+    # Select only numeric columns for correlation
+    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    
+    # Remove ID columns and other non-parameter columns
+    exclude_cols = ['OBJECTID', 'GlobalID', 'Latitude', 'Longitude']
+    parameter_cols = [col for col in numeric_cols if col not in exclude_cols]
+    
+    # Calculate correlation matrix
+    corr_matrix = df[parameter_cols].corr()
+    
+    # Create heatmap
+    fig = px.imshow(corr_matrix,
+                   labels=dict(x="Parameter", y="Parameter", color="Correlation"),
+                   x=corr_matrix.columns,
+                   y=corr_matrix.columns,
+                   color_continuous_scale='RdBu_r',  # Red-Blue scale for correlations
+                   zmin=-1,  # Fixed scale for correlations
+                   zmax=1,
+                   title='Correlation Matrix of Water Quality Parameters')
+    
+    fig.update_layout(
+        width=900,
+        height=800,
+        autosize=False,
+        coloraxis_colorbar=dict(
+            title="Correlation",
+            thicknessmode="pixels", thickness=20,
+            lenmode="pixels", len=300,
+            yanchor="top", y=1,
+            ticks="outside",
+            tickvals=[-1, -0.5, 0, 0.5, 1],  # Explicit tick values
+            ticktext=["-1.0", "-0.5", "0.0", "0.5", "1.0"]  # Formatted text
+        ),
+        margin=dict(l=80, r=150, t=100, b=80),  # Adjusted margins
+        font=dict(
+            family="Arial, sans-serif",
+            size=14
+        )
+    )
+    
+    # Add correlation values as text
+    for i, row in enumerate(corr_matrix.values):
+        for j, val in enumerate(row):
+            fig.add_annotation(
+                x=j, y=i,
+                text=f"{val:.2f}",
+                showarrow=False,
+                font=dict(
+                    color='white' if abs(val) > 0.5 else 'black',
+                    size=12  # Smaller text for readability
+                )
+            )
+    
+    return fig
+
+
+# Box Plots - Optimized
+def box_plots(df, parameter):
+    """Generate box plots for a parameter across different locations"""
+    if parameter not in df.columns or 'LocationID' not in df.columns:
+        return None
+    
+    fig = px.box(df, x='LocationID', y=parameter, 
+                color='LocationID',
+                title=f'Distribution of {parameter} by Location',
+                points='outliers',  # Only show outlier points for cleaner look
+                color_discrete_sequence=px.colors.qualitative.Bold)
+    
+    fig.update_traces(
+        boxmean=True,  # Show mean as a dashed line
+        jitter=0.3,  # Add jitter to points
+        pointpos=0,  # Position points at center
+        boxpoints='outliers',  # Only show outliers
+        marker=dict(size=8, opacity=0.7),  # Adjust marker appearance
+        line=dict(width=2),  # Thicker box lines
+        fillcolor='rgba(255,255,255,0.6)'  # Semi-transparent fill
+    )
+    
+    fig.update_layout(
+        xaxis_title='Location ID',
+        yaxis_title=parameter,
+        template='plotly_white',
+        autosize=False,
+        width=1000,
+        height=600,
+        margin=dict(l=60, r=60, t=80, b=80),
+        font=dict(
+            family="Arial, sans-serif",
+            size=14
+        ),
+        plot_bgcolor='white'
+    )
+    
+    # Update axes
+    fig.update_xaxes(
+        gridcolor='lightgray',
+        linewidth=1,
+        linecolor='black',
+        type='category'  # Ensure categorical x-axis
+    )
+    
+    fig.update_yaxes(
+        gridcolor='lightgray',
+        linewidth=1,
+        linecolor='black',
+        zeroline=True,
+        zerolinewidth=1.5,
+        zerolinecolor='black'
+    )
+    
+    return fig
+
+
+# Threshold Analysis - Optimized
+def threshold_analysis(df, parameter):
+    """
+    Analyze parameter data against regulatory thresholds
+    Note: Thresholds are examples and should be adjusted based on actual regulations
+    """
+    if parameter not in df.columns:
+        return None
+    
+    # Example thresholds (these should be replaced with actual regulatory values)
+    thresholds = {
+        'Ph': {'min': 6.5, 'max': 8.5, 'name': 'pH'},
+        'Temperature': {'max': 30, 'name': 'Temperature (°C)'},
+        'DissolvedOxygen': {'min': 5, 'name': 'Dissolved Oxygen (mg/L)'},
+        'Conductivity': {'max': 1000, 'name': 'Conductivity (μS/cm)'},
+        'BiologicalOxygenDemand': {'max': 5, 'name': 'BOD (mg/L)'},
+        'TotalSuspendedSolids': {'max': 30, 'name': 'TSS (mg/L)'},
+        'EColi': {'max': 126, 'name': 'E. coli (CFU/100mL)'},
+        'Ammonia': {'max': 1.0, 'name': 'Ammonia (mg/L)'},
+        'Nitrate': {'max': 10, 'name': 'Nitrate (mg/L)'}
+    }
+    
+    if parameter not in thresholds:
+        # Create a basic histogram if no threshold is defined
+        fig = px.histogram(df, x=parameter, color='LocationID',
+                          title=f'Distribution of {parameter}',
+                          color_discrete_sequence=px.colors.qualitative.Bold,
+                          opacity=0.8,
+                          nbins=30)  # Control number of bins for cleaner look
+        
+        fig.update_layout(
+            bargap=0.1,  # Gap between bars
+            width=1000,
+            height=600
+        )
+        return fig
+    
+    # Create a figure with a histogram and threshold lines
+    fig = go.Figure()
+    
+    # Add histograms for each location
+    for i, location in enumerate(df['LocationID'].unique()):
+        loc_data = df[df['LocationID'] == location]
+        fig.add_trace(go.Histogram(
+            x=loc_data[parameter],
+            name=location,
+            opacity=0.7,
+            marker_color=px.colors.qualitative.Bold[i % len(px.colors.qualitative.Bold)],
+            xbins=dict(size=(df[parameter].max() - df[parameter].min()) / 30),  # Adjust bin size
+            autobinx=False
+        ))
+    
+    # Add threshold lines
+    if 'min' in thresholds[parameter]:
+        min_val = thresholds[parameter]['min']
+        fig.add_vline(
+            x=min_val, 
+            line=dict(dash="dash", color="red", width=2),
+            annotation=dict(
+                text=f"Min Threshold: {min_val}",
+                font=dict(size=14, color="red"),
+                bgcolor="rgba(255,255,255,0.8)",
+                bordercolor="red",
+                borderwidth=1
+            )
+        )
+    
+    if 'max' in thresholds[parameter]:
+        max_val = thresholds[parameter]['max']
+        fig.add_vline(
+            x=max_val, 
+            line=dict(dash="dash", color="red", width=2),
+            annotation=dict(
+                text=f"Max Threshold: {max_val}",
+                font=dict(size=14, color="red"),
+                bgcolor="rgba(255,255,255,0.8)",
+                bordercolor="red",
+                borderwidth=1
+            )
+        )
+    
+    # Calculate exceedance percentages
+    exceedance_data = []
+    for location in df['LocationID'].unique():
+        loc_data = df[df['LocationID'] == location]
+        exceedance = {}
+        exceedance['LocationID'] = location
+        
+        if 'min' in thresholds[parameter]:
+            min_val = thresholds[parameter]['min']
+            exceedance['Below_Min'] = (loc_data[parameter] < min_val).mean() * 100
+        
+        if 'max' in thresholds[parameter]:
+            max_val = thresholds[parameter]['max']
+            exceedance['Above_Max'] = (loc_data[parameter] > max_val).mean() * 100
+        
+        exceedance_data.append(exceedance)
+    
+    # Create a subplot for exceedance percentages
+    exceedance_df = pd.DataFrame(exceedance_data)
+    
+    # Add a table with exceedance percentages
+    if not exceedance_df.empty:
+        exceedance_df = exceedance_df.round(1)  # Round to 1 decimal place
+        cols = list(exceedance_df.columns)
+        
+        # Add table below histogram
+        fig.add_trace(
+            go.Table(
+                header=dict(
+                    values=cols,
+                    fill_color='paleturquoise',
+                    align='left',
+                    font=dict(size=14, color='black'),
+                    line=dict(color='black', width=1)
+                ),
+                cells=dict(
+                    values=[exceedance_df[col] for col in cols],
+                    fill_color='lavender',
+                    align='left',
+                    font=dict(size=13),
+                    line=dict(color='white', width=1),
+                    height=30  # Taller cells
+                ),
+                domain=dict(x=[0, 1], y=[0, 0.2])
+            )
+        )
+    
+    # Improve layout
+    fig.update_layout(
+        title=f'Threshold Analysis for {thresholds[parameter]["name"]}',
+        xaxis_title=thresholds[parameter]['name'],
+        yaxis_title='Count',
+        template='plotly_white',
+        barmode='overlay',
+        bargap=0.1,
+        width=1000,
+        height=800,
+        autosize=False,
+        margin=dict(l=60, r=60, t=80, b=80),
+        font=dict(
+            family="Arial, sans-serif",
+            size=14
+        ),
+        plot_bgcolor='white',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    # Update axes
+    fig.update_xaxes(
+        gridcolor='lightgray',
+        linewidth=1,
+        linecolor='black'
+    )
+    
+    fig.update_yaxes(
+        gridcolor='lightgray',
+        linewidth=1,
+        linecolor='black',
+        rangemode='tozero'
+    )
+    
+    return fig
+
+
+# Seasonal Analysis - Optimized
+def seasonal_analysis(df, parameter):
+    """Analyze how a parameter changes seasonally"""
+    if 'SampleDate' not in df.columns or parameter not in df.columns:
+        return None
+    
+    # Add month and season columns
+    df = df.copy()
+    df['Month'] = df['SampleDate'].dt.month
+    df['Season'] = pd.cut(
+        df['Month'],
+        bins=[0, 3, 6, 9, 12],
+        labels=['Winter', 'Spring', 'Summer', 'Fall'],
+        include_lowest=True
+    )
+    
+    # Create seasonal subplot figure
+    fig = make_subplots(
+        rows=1, cols=2, 
+        subplot_titles=(
+            f'Seasonal Patterns of {parameter}', 
+            f'Monthly Patterns of {parameter}'
+        ),
+        horizontal_spacing=0.1
+    )
+    
+    # Season subplot
+    seasons = ['Winter', 'Spring', 'Summer', 'Fall']
+    for i, location in enumerate(df['LocationID'].unique()):
+        loc_data = df[df['LocationID'] == location]
+        season_data = loc_data.groupby('Season')[parameter].mean()
+        # Ensure all seasons are included, even if missing
+        season_data = season_data.reindex(seasons)
+        
+        fig.add_trace(
+            go.Scatter(
+                x=season_data.index,
+                y=season_data.values,
+                mode='lines+markers',
+                name=location,
+                line=dict(width=3),  # Thicker line
+                marker=dict(
+                    size=10,  # Larger markers
+                    line=dict(width=1, color='black')  # Add marker outline
+                )
+            ), 
+            row=1, col=1
+        )
+    
+    # Monthly subplot
+    monthly_data = df.groupby(['Month', 'LocationID'])[parameter].mean().reset_index()
+    
+    fig.add_trace(
+        go.Box(
+            x=monthly_data['Month'],
+            y=monthly_data[parameter],
+            name='Monthly Distribution',
+            marker=dict(
+                color='rgba(0,128,128,0.7)',  # Teal colored boxes
+                line=dict(width=1, color='black')
+            ),
+            line=dict(width=1.5, color='black')
+        ),
+        row=1, col=2
+    )
+    
+    # Add individual points for each location
+    for i, location in enumerate(df['LocationID'].unique()):
+        loc_data = monthly_data[monthly_data['LocationID'] == location]
+        fig.add_trace(
+            go.Scatter(
+                x=loc_data['Month'],
+                y=loc_data[parameter],
+                mode='markers',
+                name=location,
+                marker=dict(
+                    size=8,
+                    line=dict(width=1, color='black'),
+                    color=px.colors.qualitative.Bold[i % len(px.colors.qualitative.Bold)]
+                )
+            ),
+            row=1, col=2
+        )
+    
+    # Improve layout
+    fig.update_layout(
+        height=600,
+        width=1200,
+        title_text=f"Seasonal Analysis of {parameter}",
+        template='plotly_white',
+        autosize=False,
+        margin=dict(l=60, r=60, t=80, b=80),
+        font=dict(
+            family="Arial, sans-serif",
+            size=14
+        ),
+        plot_bgcolor='white',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    # Update seasonal x-axis
+    fig.update_xaxes(
+        title="Season",
+        gridcolor='lightgray',
+        linewidth=1,
+        linecolor='black',
+        type='category',
+        row=1, col=1
+    )
+    
+    # Set x-axis for monthly plot to show month names
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    fig.update_xaxes(
+        title="Month",
+        tickvals=list(range(1, 13)),
+        ticktext=month_names,
+        gridcolor='lightgray',
+        linewidth=1,
+        linecolor='black',
+        row=1, col=2
+    )
+    
+    # Update both y-axes
+    for i in range(1, 3):
+        fig.update_yaxes(
+            title=parameter,
+            gridcolor='lightgray',
+            linewidth=1,
+            linecolor='black',
+            zeroline=True,
+            zerolinewidth=1,
+            zerolinecolor='black',
+            row=1, col=i
+        )
+    
+    return fig
+
+
+# Example function to convert plotly figures to base64 for embedding in React
+def fig_to_base64(fig):
+    """Convert a plotly figure to base64 encoded image with high DPI"""
+    img_bytes = fig.to_image(format="png", scale=2)  # Scale=2 doubles the DPI for crisper images
+    encoded = base64.b64encode(img_bytes).decode('ascii')
+    return f"data:image/png;base64,{encoded}"
+
+
+# This function would be exposed to the React frontend
+def get_visualization(data, vis_type, parameter=None, location_filter=None):
+    """
+    Main function to be called from React frontend
+    
+    Parameters:
+    - data: CSV data as string or bytes
+    - vis_type: type of visualization to generate
+    - parameter: parameter to visualize
+    - location_filter: optional filter for locations
+    
+    Returns:
+    - JSON with visualization data that can be rendered in React
+    """
+    df = process_uploaded_csv(data)
+    fig = generate_visualization(df, vis_type, parameter, location_filter)
+    
+    # For React integration using Plotly.react
+    if fig:
+        return {
+            'success': True,
+            'plotlyData': fig.to_json(),
+            'config': {
+                'responsive': True,
+                'displayModeBar': True,
+                'toImageButtonOptions': {
+                    'format': 'png',
+                    'filename': f'{vis_type}_{parameter}',
+                    'scale': 2  # Higher scale for crisper downloaded images
+                }
+            }
+        }
+    else:
+        return {
+            'success': False,
+            'error': 'Could not generate visualization'
+        }
