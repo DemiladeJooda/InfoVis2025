@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
+import { styled } from '@mui/material/styles';
+import HomeStyle from './Home.css'
 import './Dashboard.css';
 
 function Dashboard() {
@@ -18,6 +20,19 @@ function Dashboard() {
     setSelectedParam('');
     setSelectedLocations([]);
   };
+
+  // Hidden Input Object
+  const HiddenInput = styled('input')({
+    clip: 'rect(0,0,0,0)',
+    clipPath: 'inset(50%)',
+    height: 1,
+    overflow: 'hidden',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    whiteSpace: 'nowrap',
+    width: 1,
+  })
 
   // Handle file upload
   const handleFileUpload = (event) => {
@@ -114,7 +129,9 @@ function Dashboard() {
       
       <div className="upload-section">
         <h2>1. Upload Data</h2>
-        <input type="file" accept=".csv" onChange={handleFileUpload} />
+        <label className="list-div">
+              <HiddenInput type='file' accept='.csv' onChange={handleFileUpload}/>
+              Upload</label>
       </div>
       
       {csvFile && (
