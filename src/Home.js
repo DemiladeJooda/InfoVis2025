@@ -2,19 +2,6 @@ import './Home.css';
 import { styled } from '@mui/material/styles'
 import {useNavigate } from 'react-router-dom';
 
-//create hidden input
-const HiddenInput = styled('input')({
-  clip: 'rect(0,0,0,0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-})
-
 //Functions in Components
 function toggleSection(sectionId) {
   document.querySelectorAll('.section').forEach(section => {
@@ -50,9 +37,6 @@ export default function Home() {
             <div className="list-div" onClick={() => toggleSection('parameters-content')}>Water Quality Parameters</div>
             <div className="list-div" onClick={() => {navigate('/dashboard')}}>Visualization Dashboard</div>
             <div className="list-div" onClick={() => toggleSection('epa-content')}>EPA Recommendations</div>
-            <label className="list-div">
-              <HiddenInput type='file' accept='.csv' onChange={() => handleFileUpload}/>
-              Upload</label>
         </div>
 
         <div id="about-content" className="section">
