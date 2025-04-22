@@ -1,3 +1,41 @@
+.epa-guidelines-container {
+  margin-top: 1rem;
+}
+
+.epa-guidelines-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.epa-guidelines-table th,
+.epa-guidelines-table td {
+  border: 2px solid black;
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+
+.epa-guidelines-table th {
+  background-color: #f0f0f0;
+}
+
+.epa-guidelines-table.fixed-layout th:nth-child(1),
+.epa-guidelines-table.fixed-layout td:nth-child(1) {
+  width: 25%;
+}
+
+.epa-guidelines-table.fixed-layout th:nth-child(2),
+.epa-guidelines-table.fixed-layout td:nth-child(2) {
+  width: 45%;
+}
+
+.epa-guidelines-table.fixed-layout th:nth-child(3),
+.epa-guidelines-table.fixed-layout td:nth-child(3) {
+  width: 30%;
+}
+
 .source-links {
   margin-top: 1rem;
 }
