@@ -1,0 +1,16 @@
+.epa-guidelines-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.epa-guidelines-table th,
+.epa-guidelines-table td {
+  border: 2px solid black; /* Adjust thickness/color as needed */
+  padding: 8px;
+  text-align: left;
+}
+
+.epa-guidelines-table th {
+  background-color: #f0f0f0; /* Optional: soft header background */
+}

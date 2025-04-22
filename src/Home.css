@@ -31,6 +31,29 @@ body {
   border-radius: 10px;
 }
 
+.epa-tab-buttons {
+  margin-top: 1rem;
+}
+
+.epa-tab-buttons button {
+  margin: 0.25rem;
+  padding: 8px 12px;
+  background-color: #654ea3;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.epa-tab-buttons button.active {
+  background-color: #44337a;
+}
+
+.epa-tab-content {
+  margin-top: 1rem;
+}
+
+
 #fileInput { display: none; }
 
 .section { padding: 20px; border-top: 2px solid #ccc; display: none }
