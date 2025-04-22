@@ -1,14 +1,8 @@
 import './Home.css';
-import { styled } from '@mui/material/styles'
+import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
-import React, { useState } from 'react';
-import EpaGuidelinesTable from './EpaGuidelinesTable'; // Optional default/general table
-
-// 🔌 Optional future imports
-// import RiversTable from './RiversTable';
-// import LakesTable from './LakesTable';
-// import WetlandsTable from './WetlandsTable';
-// etc.
+import React, { useState, useEffect } from 'react';
+import EpaGuidelinesTable from './EpaGuidelinesTable'; // Accepts waterwayType as prop
 
 function toggleSection(sectionId) {
   document.querySelectorAll('.section').forEach(section => {
@@ -42,9 +36,20 @@ export default function Home() {
     { key: 'drinking', label: 'Drinking Water Sources' },
   ];
 
+  useEffect(() => {
+    // Set default tab to 'rivers' when 'epa-content' becomes visible
+    const observer = new MutationObserver(() => {
+      const epaContent = document.getElementById('epa-content');
+      if (epaContent && epaContent.style.display !== 'none' && !activeEpaTab) {
+        setActiveEpaTab('rivers');
+      }
+    });
+    observer.observe(document.body, { attributes: true, subtree: true });
+    return () => observer.disconnect();
+  }, [activeEpaTab]);
+
   return (
     <div className="App">
-
       <div className="center-div">
         <h1>Water Quality Data Visualization: A Runoff Pollutant Advisory</h1>
       </div>
@@ -52,7 +57,7 @@ export default function Home() {
       <div className="list-container">
         <div className="list-div" onClick={() => toggleSection('about-content')}>About Dataset</div>
         <div className="list-div" onClick={() => toggleSection('parameters-content')}>Water Quality Parameters</div>
-        <div className="list-div" onClick={() => { navigate('/dashboard') }}>Visualization Dashboard</div>
+        <div className="list-div" onClick={() => navigate('/dashboard')}>Visualization Dashboard</div>
         <div className="list-div" onClick={() => toggleSection('epa-content')}>EPA Recommendations</div>
       </div>
 
@@ -76,10 +81,9 @@ export default function Home() {
           Guidelines and recommendations from the EPA. Water sources have various quality standards and restrictions based on
           their uses and are governed by a patchwork of legislation and rules. These designations include Aquatic Life, Recreation,
           Fish and Shellfish Consumption, Public Water Supply, and Agricultural/Industrial use. Select the appropriate designation from 
-	  the list below and explore the guidelines for water quality.
+          the list below and explore the guidelines for water quality.
         </p>
 
-        {/* 🔘 Tab Buttons */}
         <div className="epa-tab-buttons">
           {epaTabs.map(tab => (
             <button
@@ -92,59 +96,12 @@ export default function Home() {
           ))}
         </div>
 
-        {/* 📦 Tab Content Area */}
         <div className="epa-tab-content">
-          {activeEpaTab === 'rivers' && (
-            <div>
-              <h3>Rivers & Streams</h3>
-              <p>Typical criteria include dissolved oxygen, temperature, sediment load, and E. coli thresholds.</p>
-              {/* <RiversTable /> */}
-              <EpaGuidelinesTable />
-            </div>
-          )}
-          {activeEpaTab === 'lakes' && (
-            <div>
-              <h3>Lakes & Ponds</h3>
-              <p>Guidelines focus on eutrophication, algal bloom potential, and nutrient loading.</p>
-              {/* <LakesTable /> */}
-              <EpaGuidelinesTable />
-            </div>
-          )}
-          {activeEpaTab === 'wetlands' && (
-            <div>
-              <h3>Wetlands</h3>
-              <p>Wetlands are protected for their ecological services and are evaluated for hydrology and biodiversity health.</p>
-              {/* <WetlandsTable /> */}
-              <EpaGuidelinesTable />
-            </div>
-          )}
-          {activeEpaTab === 'estuaries' && (
-            <div>
-              <h3>Estuaries</h3>
-              <p>Criteria often include salinity gradients, dissolved oxygen, and nutrient thresholds.</p>
-              <EpaGuidelinesTable />
-            </div>
-          )}
-          {activeEpaTab === 'coastal' && (
-            <div>
-              <h3>Coastal Waters</h3>
-              <p>Includes ocean-adjacent waters, typically governed by marine life protection standards and recreational criteria.</p>
-              <EpaGuidelinesTable />
-            </div>
-          )}
-          {activeEpaTab === 'groundwater' && (
-            <div>
-              <h3>Groundwater</h3>
-              <p>Evaluated for drinking safety, typically for nitrates, arsenic, and microbial content.</p>
-              <EpaGuidelinesTable />
-            </div>
-          )}
-          {activeEpaTab === 'drinking' && (
-            <div>
-              <h3>Drinking Water Sources</h3>
-              <p>Includes rivers, lakes, and reservoirs; held to Safe Drinking Water Act MCLs (maximum contaminant levels).</p>
-              <EpaGuidelinesTable />
-            </div>
+          {activeEpaTab && (
+            <>
+              <h3>{epaTabs.find(t => t.key === activeEpaTab)?.label}</h3>
+              <EpaGuidelinesTable waterwayType={activeEpaTab} />
+            </>
           )}
         </div>
       </div>

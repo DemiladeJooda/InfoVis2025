@@ -1,16 +1,13 @@
-.epa-guidelines-table {
-  width: 100%;
-  border-collapse: collapse;
+.source-links {
   margin-top: 1rem;
 }
 
-.epa-guidelines-table th,
-.epa-guidelines-table td {
-  border: 2px solid black; /* Adjust thickness/color as needed */
-  padding: 8px;
-  text-align: left;
+.source-links ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
 }
 
-.epa-guidelines-table th {
-  background-color: #f0f0f0; /* Optional: soft header background */
+.source-links a {
+  color: #2c3e50;
+  text-decoration: underline;
 }
