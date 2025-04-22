@@ -1,8 +1,39 @@
 import './Home.css';
-import { styled } from '@mui/material/styles';
+import * as THREE from 'three'
 import { useNavigate } from 'react-router-dom';
-import React, { useState, useEffect } from 'react';
 import EpaGuidelinesTable from './EpaGuidelinesTable'; // Accepts waterwayType as prop
+import React, {useState, useEffect, useRef} from 'react'
+import vantaWavesMin from 'vanta/dist/vanta.waves.min.js';
+
+const WaveComponent = (options = {}) => {
+  const navigate = useNavigate();
+  const [vantaEffect, setVantaEffect] = useState(null)
+  const myRef = useRef(null)
+  useEffect(() => {
+    if (!vantaEffect) {
+      setVantaEffect(vantaWavesMin({
+        el: myRef.current,
+        THREE: THREE
+      }))
+    }
+    return () => {
+      if (vantaEffect) vantaEffect.destroy()
+    }
+  },[vantaEffect])
+
+  return (<div ref={myRef} style={{ height: '100vh', width: '100%' , zIndex: 1}}>
+    <div className="center-div">
+        <h1>Water Quality Data Visualization: A Runoff Pollutant Advisory</h1>
+      </div>
+
+      <div className="list-container">
+        <div className="list-div" onClick={() => toggleSection('about-content')}>About Dataset</div>
+        <div className="list-div" onClick={() => toggleSection('parameters-content')}>Water Quality Parameters</div>
+        <div className="list-div" onClick={() => navigate('/dashboard')}>Visualization Dashboard</div>
+        <div className="list-div" onClick={() => toggleSection('epa-content')}>EPA Recommendations</div>
+      </div>
+</div>)
+}
 
 function toggleSection(sectionId) {
   document.querySelectorAll('.section').forEach(section => {
@@ -11,19 +42,7 @@ function toggleSection(sectionId) {
   document.getElementById(sectionId).style.display = 'block';
 }
 
-function handleFileUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const csvData = e.target.result.split('\n').map(row => row.split(','));
-    console.log("CSV Data Uploaded:", csvData);
-  };
-  reader.readAsText(file);
-}
-
 export default function Home() {
-  const navigate = useNavigate();
   const [activeEpaTab, setActiveEpaTab] = useState(null);
 
   const epaTabs = [
@@ -50,16 +69,8 @@ export default function Home() {
 
   return (
     <div className="App">
-      <div className="center-div">
-        <h2>Water Quality Data Visualization: A Runoff Pollutant Advisory</h2>
-      </div>
-
-      <div className="list-container center-div">
-        <div className="list-div" onClick={() => toggleSection('about-content')}>About Dataset</div>
-        <div className="list-div" onClick={() => toggleSection('parameters-content')}>Water Quality Parameters</div>
-        <div className="list-div" onClick={() => navigate('/dashboard')}>Visualization Dashboard</div>
-        <div className="list-div" onClick={() => toggleSection('epa-content')}>EPA Recommendations</div>
-      </div>
+      
+      <WaveComponent/>
 
       <div id="about-content" className="section">
         <h2>About this dataset</h2>
