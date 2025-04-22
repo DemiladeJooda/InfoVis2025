@@ -51,10 +51,10 @@ export default function Home() {
   return (
     <div className="App">
       <div className="center-div">
-        <h1>Water Quality Data Visualization: A Runoff Pollutant Advisory</h1>
+        <h2>Water Quality Data Visualization: A Runoff Pollutant Advisory</h2>
       </div>
 
-      <div className="list-container">
+      <div className="list-container center-div">
         <div className="list-div" onClick={() => toggleSection('about-content')}>About Dataset</div>
         <div className="list-div" onClick={() => toggleSection('parameters-content')}>Water Quality Parameters</div>
         <div className="list-div" onClick={() => navigate('/dashboard')}>Visualization Dashboard</div>

@@ -3,6 +3,11 @@
     max-width: 1200px;
     margin: 0 auto;
   }
+
+  h3 {
+    margin-top: 10px;
+
+  }
   
   .upload-section, .visualization-controls, .visualization-display {
     margin-bottom: 30px;
@@ -82,8 +87,12 @@
   .list-div {
     text-align: center;
     background-color: #6150BD;
-    padding: 20px;
+    padding: 10px;
     width: 600px;
     border-radius: 10px;
+    color: white;
   }
   
+  .list-div:hover{
+    cursor: pointer
+  }

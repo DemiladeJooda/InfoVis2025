@@ -5,7 +5,8 @@ from visualization import get_visualization
 
 app = Flask(__name__)
 # Allow only frontend origin
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+
 
 @app.route('/')
 def index():
@@ -32,5 +33,6 @@ def visualize():
     except Exception as e:
         return jsonify(success=False, error=str(e)), 500
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True, port=5050)
+

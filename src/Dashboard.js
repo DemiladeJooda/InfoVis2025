@@ -125,10 +125,10 @@ function Dashboard() {
 
   return (
     <div className="dashboard-container">
-      <h1>Water Quality Dashboard</h1>
+      <h2>Water Quality Dashboard</h2>
       
       <div className="upload-section">
-        <h2>1. Upload Data</h2>
+        <h3>1. Upload Data</h3>
         <label className="list-div">
               <HiddenInput type='file' accept='.csv' onChange={handleFileUpload}/>
               Upload</label>
@@ -136,7 +136,7 @@ function Dashboard() {
       
       {csvFile && (
         <div className="visualization-controls">
-          <h2>2. Select Visualization</h2>
+          <h3>2. Select Visualization</h3>
           
           <div className="control-group">
             <label>Visualization Type:</label>
