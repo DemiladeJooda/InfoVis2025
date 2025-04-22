@@ -5,47 +5,53 @@
 .epa-guidelines-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto; /* Allow columns to shrink based on content */
 }
 
 .epa-guidelines-table th,
 .epa-guidelines-table td {
   border: 2px solid black;
-  padding: 8px;
+  padding: 6px 10px;
   text-align: left;
   vertical-align: top;
-  word-wrap: break-word;
+  white-space: nowrap; /* Prevent wrapping */
 }
 
 .epa-guidelines-table th {
   background-color: #f0f0f0;
 }
 
+/* Removed fixed-layout column widths */
 .epa-guidelines-table.fixed-layout th:nth-child(1),
-.epa-guidelines-table.fixed-layout td:nth-child(1) {
-  width: 25%;
-}
-
+.epa-guidelines-table.fixed-layout td:nth-child(1),
 .epa-guidelines-table.fixed-layout th:nth-child(2),
-.epa-guidelines-table.fixed-layout td:nth-child(2) {
-  width: 45%;
-}
-
+.epa-guidelines-table.fixed-layout td:nth-child(2),
 .epa-guidelines-table.fixed-layout th:nth-child(3),
 .epa-guidelines-table.fixed-layout td:nth-child(3) {
-  width: 30%;
+  width: auto;
 }
 
 .source-links {
   margin-top: 1rem;
 }
 
-.source-links ul {
-  list-style-type: disc;
+.source-links ul,
+.source-links ol {
   padding-left: 1.25rem;
 }
 
 .source-links a {
   color: #2c3e50;
+  text-decoration: underline;
+}
+
+.waterway-blurb {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.waterway-blurb a {
+  color: #0066cc;
   text-decoration: underline;
 }
