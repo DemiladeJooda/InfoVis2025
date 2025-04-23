@@ -1,20 +1,59 @@
 .dashboard-container {
-    padding: 20px;
+    padding: 40px 20px;
     max-width: 1200px;
     margin: 0 auto;
+    
   }
 
-  h3 {
-    margin-top: 10px;
-
+  h2 {
+    font-size: 28px;
+    margin-bottom: 15px;
   }
   
-  .upload-section, .visualization-controls, .visualization-display {
+  h3 {
+    font-size: 20px;
+    margin: 10px 0;
+  }
+  
+  .visualization-controls, .visualization-display {
     margin-bottom: 30px;
     padding: 20px;
     border-radius: 8px;
     background-color: #f8f9fa;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+  }
+
+  .upload-section {
+    display: flex;
+    flex-direction: row;
+    align-items:center;
+    
+    gap: 15px;
+  
+    margin-bottom: 10px;
+    padding: 5px 15px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+    width: fit-content; /* so it only takes up as much space as needed */
+  }
+
+  .upload-button-wrapper {
+    flex-direction: row;
+    justify-content: center; /* or center / end */
+    margin-top: 10px;
+  }
+  
+  .upload-button-wrapper button {
+    background-color: #6150BD;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
   }
   
   .control-group {

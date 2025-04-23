@@ -39,6 +39,12 @@ body {
   margin-bottom: 10px;
   
 }
+.App .list-div:hover {
+  background-color: #4e3ca6;       /* slightly darker purple */
+  cursor: pointer;
+  transform: scale(1.01);          /* subtle zoom */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
 
 .epa-tab-buttons {
   margin-top: 1rem;
@@ -76,4 +82,5 @@ body {
 
 h2 {
   text-align: center;
+  
 }

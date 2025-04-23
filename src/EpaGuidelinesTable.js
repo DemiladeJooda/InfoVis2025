@@ -127,7 +127,7 @@ const EpaGuidelinesTable = ({ waterwayType = 'rivers' }) => {
 
       <div className="source-links">
         <h3>Source References</h3>
-        <ol>
+        <ol style={{paddingLeft: '16em', textAlign: 'left'}}>
           {uniqueSources.map((src, idx) => (
             <li key={idx} id={`ref-${idx + 1}`}>
               {sourceLinks[src] ? (

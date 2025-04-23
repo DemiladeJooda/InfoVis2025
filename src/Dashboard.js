@@ -38,19 +38,19 @@ function Dashboard() {
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     setCsvFile(file);
-    
+
     // Parse CSV to get parameters and locations
     const reader = new FileReader();
     reader.onload = (e) => {
       const csvText = e.target.result;
       const lines = csvText.split('\n');
       const headers = lines[0].split(',');
-      
+
       // Extract parameter names (exclude metadata fields)
       const excludeFields = ['OBJECTID', 'SampleDate', 'Location', 'LocationID', 'GlobalID', 'Latitude', 'Longitude', 'FrozenOver'];
       const params = headers.filter(h => !excludeFields.includes(h.trim()));
       setAvailableParams(params);
-      
+
       // Extract location IDs
       if (lines.length > 1) {
         const locationIndex = headers.findIndex(h => h.trim() === 'LocationID');
@@ -83,20 +83,20 @@ function Dashboard() {
 
   // Request visualization from backend
   const generateVisualization = async () => {
-    if (!csvFile || (selectedVisType !== 'correlation_matrix' && 
-                     selectedVisType !== 'map_view' && !selectedParam)) {
+    if (!csvFile || (selectedVisType !== 'correlation_matrix' &&
+      selectedVisType !== 'map_view' && !selectedParam)) {
       alert('Please select a file, visualization type, and parameter (if required)');
       return;
     }
-    
+
     setLoading(true);
-    
+
     const formData = new FormData();
     formData.append('csv_file', csvFile);
     formData.append('vis_type', selectedVisType);
     formData.append('parameter', selectedParam);
     formData.append('location_filter', JSON.stringify(selectedLocations));
-    
+
     try {
       const response = await fetch('http://localhost:5050/api/visualize', {
         method: 'POST',
@@ -109,7 +109,7 @@ function Dashboard() {
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         setPlotData(JSON.parse(result.plotlyData));
       } else {
@@ -126,18 +126,28 @@ function Dashboard() {
   return (
     <div className="dashboard-container">
       <h2>Water Quality Dashboard</h2>
-      
+
       <div className="upload-section">
         <h3>1. Upload Data</h3>
-        <label className="list-div">
-              <HiddenInput type='file' accept='.csv' onChange={handleFileUpload}/>
-              Upload</label>
+
+        <div className="upload-button-wrapper">
+          <button type="button" onClick={() => document.getElementById('csv-upload').click()}>
+            Upload CSV
+          </button>
+          <input
+            type="file"
+            id="csv-upload"
+            accept=".csv"
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
+        </div>
       </div>
-      
+
       {csvFile && (
         <div className="visualization-controls">
           <h3>2. Select Visualization</h3>
-          
+
           <div className="control-group">
             <label>Visualization Type:</label>
             <select value={selectedVisType} onChange={e => setSelectedVisType(e.target.value)}>
@@ -146,7 +156,7 @@ function Dashboard() {
               ))}
             </select>
           </div>
-          
+
           {selectedVisType !== 'correlation_matrix' && selectedVisType !== 'map_view' && (
             <div className="control-group">
               <label>Parameter:</label>
@@ -158,7 +168,7 @@ function Dashboard() {
               </select>
             </div>
           )}
-          
+
           <div className="control-group">
             <label>Filter Locations (optional):</label>
             <div className="location-checkboxes">
@@ -181,13 +191,13 @@ function Dashboard() {
               ))}
             </div>
           </div>
-          
+
           <button onClick={generateVisualization} disabled={loading}>
             {loading ? 'Generating...' : 'Generate Visualization'}
           </button>
         </div>
       )}
-      
+
       <div className="visualization-display">
         {plotData && (
           <>
@@ -200,8 +210,8 @@ function Dashboard() {
               />
             </div>
             <div className="visualization-controls">
-              <button 
-                onClick={resetVisualization} 
+              <button
+                onClick={resetVisualization}
                 className="reset-button">
                 Create New Visualization
               </button>
