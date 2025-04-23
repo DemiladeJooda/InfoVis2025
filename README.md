@@ -1,10 +1,42 @@
-# Getting Started with Create React App
+# InfoVis Project 2025: Water Quality Dashboard
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project provides water quality analytics for various locations within the Big Sioux River Watershed. The data includes key parameters such as pH levels, dissolved oxygen, turbidity, and the presence of pollutants. Visual design techniques assess water health and quality in order to inform decisions in the efforts of conservation, environmental health, and human health challenges.
 
-## Available Scripts
+# To Run The Project
 
-In the project directory, you can run:
+The project consists of two components: Frontend and Backend, that need to be built and executed for the project to successfully run.
+
+## Backend Construction
+
+to setup the backend, navigate to the backend folder of the project directory using `cd ../../backend`
+> Note: Ensure you have python and pip installed in order to run the dependencies
+
+Once you've navigated to the directory download the python dependencies necessary to execute the backend. Use the command:
+`pip install -r requirements.txt` to download the required dependencies
+
+> Alternatively, if pip fails to install the required dependencies use the following codeblock to download the dependencies:
+
+<code>pip install flask==2.0.1
+pip install flask-cors==3.0.10
+pip install pandas==1.5.3
+pip install numpy==1.23.5
+pip install matplotlib==3.6.3
+pip install seaborn==0.11.2
+pip install plotly==5.3.1</code>
+
+After downloading the required libraries, use the command in the backend directory: `python app.py` to start the backend. Ensure the backend successfully executes!
+
+## Frontend Construction
+
+to setup the frontend, navigate to the project directory: `../../InfoVis2025`. Or out of the backend folder using `cd ../`. After, entering the project ensure the following dependencies are installed:
+[Node.js](https://nodejs.org/en)
+> Note: You can check that Node.js and NPM are installed using `npm -v` and `node -v`
+
+Project dependencies are installed using `npm install` in the project directory
+
+Once you've installed the project dependencies, start the project using the command `npm start` to run the project (and `python app.py` for the project) to view the entire project.
+
+## Additional Frontend Startup Shorthand Listed Below
 
 ### `npm start`
 
@@ -29,41 +61,6 @@ Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
 
 ### `npm run build` fails to minify
 
