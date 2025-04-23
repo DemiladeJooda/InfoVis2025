@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
-import { styled } from '@mui/material/styles';
-import HomeStyle from './Home.css'
 import './Dashboard.css';
 
 function Dashboard() {
@@ -11,28 +9,8 @@ function Dashboard() {
   const [selectedVisType, setSelectedVisType] = useState('time_series');
   const [selectedParam, setSelectedParam] = useState('');
   const [selectedLocations, setSelectedLocations] = useState([]);
-  const [plotData, setPlotData] = useState(null);
+  const [visualizations, setVisualizations] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Reset visualization and selections
-  const resetVisualization = () => {
-    setPlotData(null);
-    setSelectedParam('');
-    setSelectedLocations([]);
-  };
-
-  // Hidden Input Object
-  const HiddenInput = styled('input')({
-    clip: 'rect(0,0,0,0)',
-    clipPath: 'inset(50%)',
-    height: 1,
-    overflow: 'hidden',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    whiteSpace: 'nowrap',
-    width: 1,
-  })
 
   // Handle file upload
   const handleFileUpload = (event) => {
@@ -81,6 +59,9 @@ function Dashboard() {
     { value: 'seasonal_analysis', label: 'Seasonal Analysis' }
   ];
 
+  // Generate a unique ID for each visualization
+  const generateId = () => `vis-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
   // Request visualization from backend
   const generateVisualization = async () => {
     if (!csvFile || (selectedVisType !== 'correlation_matrix' &&
@@ -111,7 +92,20 @@ function Dashboard() {
       const result = await response.json();
 
       if (result.success) {
-        setPlotData(JSON.parse(result.plotlyData));
+        const newVisualization = {
+          id: generateId(),
+          type: selectedVisType,
+          parameter: selectedParam,
+          locations: [...selectedLocations],
+          plotData: JSON.parse(result.plotlyData),
+          title: `${selectedVisType.replace(/_/g, ' ')} - ${selectedParam || 'All Parameters'}`
+        };
+
+        setVisualizations([...visualizations, newVisualization]);
+        
+        // Reset selection for next visualization
+        setSelectedParam('');
+        setSelectedLocations([]);
       } else {
         alert('Error generating visualization: ' + result.error);
       }
@@ -123,101 +117,141 @@ function Dashboard() {
     }
   };
 
+  // Remove visualization by ID
+  const removeVisualization = (id) => {
+    setVisualizations(visualizations.filter(vis => vis.id !== id));
+  };
+
   return (
-    <div className="dashboard-container">
-      <h2>Water Quality Dashboard</h2>
-
-      <div className="upload-section">
-        <h3>1. Upload Data</h3>
-
-        <div className="upload-button-wrapper">
-          <button type="button" onClick={() => document.getElementById('csv-upload').click()}>
-            Upload CSV
-          </button>
-          <input
-            type="file"
-            id="csv-upload"
-            accept=".csv"
-            style={{ display: 'none' }}
-            onChange={handleFileUpload}
-          />
+    <div className="dashboard-root">
+      {/* Navigation bar */}
+      <nav className="nav-bar" style={{width: '100vw', marginLeft: 'calc(-50vw + 50%)'}}>
+        <div className="nav-title">Water Quality Dashboard</div>
+        <div className="nav-actions">
+          <button className="nav-btn">TEMP</button>
+          <button className="nav-btn">TEMP</button>
+          <button className="nav-btn">TEMP</button>
+          <button className="nav-btn">TEMP</button>
         </div>
-      </div>
+      </nav>
 
-      {csvFile && (
-        <div className="visualization-controls">
-          <h3>2. Select Visualization</h3>
-
-          <div className="control-group">
-            <label>Visualization Type:</label>
-            <select value={selectedVisType} onChange={e => setSelectedVisType(e.target.value)}>
-              {visTypes.map(type => (
-                <option key={type.value} value={type.value}>{type.label}</option>
-              ))}
-            </select>
-          </div>
-
-          {selectedVisType !== 'correlation_matrix' && selectedVisType !== 'map_view' && (
-            <div className="control-group">
-              <label>Parameter:</label>
-              <select value={selectedParam} onChange={e => setSelectedParam(e.target.value)}>
-                <option value="">Select Parameter</option>
-                {availableParams.map(param => (
-                  <option key={param} value={param}>{param}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div className="control-group">
-            <label>Filter Locations (optional):</label>
-            <div className="location-checkboxes">
-              {availableLocations.map(loc => (
-                <label key={loc} className="location-checkbox">
-                  <input
-                    type="checkbox"
-                    value={loc}
-                    checked={selectedLocations.includes(loc)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedLocations([...selectedLocations, loc]);
-                      } else {
-                        setSelectedLocations(selectedLocations.filter(l => l !== loc));
-                      }
-                    }}
-                  />
-                  {loc}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <button onClick={generateVisualization} disabled={loading}>
-            {loading ? 'Generating...' : 'Generate Visualization'}
-          </button>
-        </div>
-      )}
-
-      <div className="visualization-display">
-        {plotData && (
-          <>
-            <div className="plot-container">
-              <Plot
-                data={plotData.data}
-                layout={plotData.layout}
-                config={{ responsive: true }}
-                style={{ width: '100%', height: '600px' }}
-              />
-            </div>
-            <div className="visualization-controls">
-              <button
-                onClick={resetVisualization}
-                className="reset-button">
-                Create New Visualization
+      <div className="dashboard-main">
+        {/* Control panel */}
+        <div className="control-panel">
+          <div className="upload-section">
+            <div className="upload-header">
+              <p className="upload-label">1. Upload Data</p>
+              <button 
+                type="button" 
+                className="upload-btn"
+                onClick={() => document.getElementById('csv-upload').click()}
+              >
+                Upload CSV
               </button>
             </div>
-          </>
-        )}
+            <input
+              type="file"
+              id="csv-upload"
+              accept=".csv"
+              style={{ display: 'none' }}
+              onChange={handleFileUpload}
+            />
+            {csvFile && <span className="file-name">{csvFile.name}</span>}
+          </div>
+
+          {csvFile && (
+            <div className="visualization-controls">
+              <h3>2. Configure Visualization</h3>
+              <div className="select-row">
+                <div className="control-group">
+                  <label>Visualization Type:</label>
+                  <select value={selectedVisType} onChange={e => setSelectedVisType(e.target.value)}>
+                    {visTypes.map(type => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="control-group">
+                  <label>Parameter Type:</label>
+                  <select value={selectedParam} onChange={e => setSelectedParam(e.target.value)}>
+                    <option value="">Select Parameter Type</option>
+                    {availableParams.map(param => (
+                      <option key={param} value={param}>{param}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="control-group">
+                <label>Filter Locations (optional):</label>
+                <div className="location-checkboxes">
+                  {availableLocations.map(loc => (
+                    <label key={loc} className="location-checkbox">
+                      <input
+                        type="checkbox"
+                        value={loc}
+                        checked={selectedLocations.includes(loc)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedLocations([...selectedLocations, loc]);
+                          } else {
+                            setSelectedLocations(selectedLocations.filter(l => l !== loc));
+                          }
+                        }}
+                      />
+                      {loc}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <button 
+                className="generate-btn" 
+                onClick={generateVisualization} 
+                disabled={loading}
+              >
+                {loading ? 'Generating...' : 'Add to Dashboard'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Visualization grid */}
+        <div className="visualizations-grid">
+          {visualizations.length === 0 && csvFile && (
+            <div className="empty-state">
+              Configure and add your first visualization to the dashboard
+            </div>
+          )}
+          
+          {visualizations.length === 0 && !csvFile && (
+            <div className="empty-state">
+              Upload a CSV file to get started
+            </div>
+          )}
+          
+          {visualizations.map(vis => (
+            <div key={vis.id} className="visualization-card">
+              <div className="visualization-header">
+                <h4>{vis.title}</h4>
+                <button className="remove-btn" onClick={() => removeVisualization(vis.id)}>✕</button>
+              </div>
+              <div className="plot-container">
+                <Plot
+                  data={vis.plotData.data}
+                  layout={{
+                    ...vis.plotData.layout,
+                    autosize: true,
+                    margin: { l: 50, r: 20, t: 30, b: 50 }
+                  }}
+                  config={{ responsive: true }}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -31,6 +31,7 @@ const WaveComponent = (options = {}) => {
         <div className="list-div" onClick={() => toggleSection('parameters-content')}>Water Quality Parameters</div>
         <div className="list-div" onClick={() => navigate('/dashboard')}>Visualization Dashboard</div>
         <div className="list-div" onClick={() => toggleSection('epa-content')}>EPA Recommendations</div>
+        <div className="list-div" onClick={() => navigate('/sources')}>General Sources</div>
       </div>
 </div>)
 }
