@@ -105,9 +105,9 @@ def time_series_visualization(df, parameter):
         legend_title='Location ID',
         template='plotly_white',
         autosize=True,
-        height=600,  # Fixed height for better proportions
-        width=1000,  # Fixed width for better proportions
-        margin=dict(l=60, r=60, t=80, b=80),
+        height=400,  # Reduced from 600
+        width=600,   # Reduced from 1000
+        margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
         legend=dict(
             orientation="v",
             yanchor="top",
@@ -183,13 +183,13 @@ def parameter_comparison(df, parameters):
             )
     
     fig.update_layout(
-        height=300 * len(parameters),
-        width=1000,  # Fixed width for better proportions
+        height=200 * len(parameters),  # Reduced from 300
+        width=600,  # Reduced from 1000
         title_text="Parameter Comparison Across Locations",
         legend_title="Location ID",
         template='plotly_white',
         autosize=False,  # Disable autosize for consistent rendering
-        margin=dict(l=60, r=60, t=80, b=80),
+        margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
         font=dict(
             family="Arial, sans-serif",
             size=14  # Larger font for better readability
@@ -249,9 +249,9 @@ def location_comparison(df, parameter):
         yaxis_title=f'{parameter} Value',
         template='plotly_white',
         autosize=False,
-        width=1000,
-        height=600,
-        margin=dict(l=60, r=60, t=80, b=80),
+        width=600,  # Reduced from 1000
+        height=400,  # Reduced from 600
+        margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
         font=dict(
             family="Arial, sans-serif",
             size=14
@@ -332,10 +332,10 @@ def map_visualization(df, parameter):
         )
     
     fig.update_layout(
-        height=700,
-        width=1000,
+        height=500,  # Reduced from 700
+        width=600,   # Reduced from 1000
         autosize=False,
-        margin=dict(l=0, r=0, t=50, b=0),  # Reduce margins for maps
+        margin=dict(l=40, r=40, t=50, b=0),  # Reduce margins for maps
         font=dict(
             family="Arial, sans-serif",
             size=14
@@ -369,8 +369,8 @@ def correlation_matrix(df):
                    title='Correlation Matrix of Water Quality Parameters')
     
     fig.update_layout(
-        width=900,
-        height=800,
+        width=600,  # Reduced from 900
+        height=600, # Reduced from 800
         autosize=False,
         coloraxis_colorbar=dict(
             title="Correlation",
@@ -431,9 +431,9 @@ def box_plots(df, parameter):
         yaxis_title=parameter,
         template='plotly_white',
         autosize=False,
-        width=1000,
-        height=600,
-        margin=dict(l=60, r=60, t=80, b=80),
+        width=600,  # Reduced from 1000
+        height=400, # Reduced from 600
+        margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
         font=dict(
             family="Arial, sans-serif",
             size=14
@@ -597,10 +597,10 @@ def threshold_analysis(df, parameter):
         template='plotly_white',
         barmode='overlay',
         bargap=0.1,
-        width=1000,
-        height=800,
+        width=600,  # Reduced from 1000
+        height=500, # Reduced from 800
         autosize=False,
-        margin=dict(l=60, r=60, t=80, b=80),
+        margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
         font=dict(
             family="Arial, sans-serif",
             size=14
@@ -718,12 +718,12 @@ def seasonal_analysis(df, parameter):
     
     # Improve layout
     fig.update_layout(
-        height=600,
-        width=1200,
+        height=400,  # Reduced from 600
+        width=800,   # Reduced from 1200
         title_text=f"Seasonal Analysis of {parameter}",
         template='plotly_white',
         autosize=False,
-        margin=dict(l=60, r=60, t=80, b=80),
+        margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
         font=dict(
             family="Arial, sans-serif",
             size=14
