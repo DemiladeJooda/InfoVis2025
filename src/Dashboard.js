@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Plot from 'react-plotly.js';
 import './Dashboard.css';
 
@@ -122,14 +123,16 @@ function Dashboard() {
     setVisualizations(visualizations.filter(vis => vis.id !== id));
   };
 
+  const navigate = useNavigate();
+
   return (
     <div className="dashboard-root">
       {/* Navigation bar */}
       <nav className="nav-bar" style={{width: '100vw', marginLeft: 'calc(-50vw + 50%)'}}>
         <div className="nav-title">Water Quality Dashboard</div>
         <div className="nav-actions">
-          <button className="nav-btn">TEMP</button>
-          <button className="nav-btn">TEMP</button>
+          <button className="nav-btn" onClick={() => navigate("/")}>Home</button>
+          <button className="nav-btn" onClick={() => navigate("/sources")}>Sources</button>
           <button className="nav-btn">TEMP</button>
           <button className="nav-btn">TEMP</button>
         </div>

@@ -16,8 +16,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/sources" element={<Sources/>}/>
         </Routes>
-        <Sources /> {/* ✅ Always visible footer */}
       </div>
     </Router>
   );
