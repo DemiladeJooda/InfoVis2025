@@ -3,118 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Water Quality Visualizations</title>
-    <link rel="stylesheet" href="initial_interface.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <title>Water Quality Analysis</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
             padding: 20px;
-            background-color: #f0f4f8;
+            background-color: #f4f4f4;
         }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .charts-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .chart-box {
-            background-color: #fff;
+        .container {
+            max-width: 800px;
+            background: white;
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            width: 450px;
-            height: 375px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+        h1, h2 {
             text-align: center;
-            position: relative;
         }
-
-        #map {
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, select, button {
             width: 100%;
-            height: 100%;
-            border-radius: 8px;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
-
-        .placeholder-text {
-            color: #888;
-            font-size: 22px;
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
         }
-        .chart-image {
-            width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin-top: 10px;
+        button:hover {
+            background-color: #0056b3;
+        }
+        .chart-container {
+            text-align: center;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-
-    <h2>Visualization Dashboard</h2>
-
-    <div class="charts-container">
-        <div class="chart-box">
-            <h3>Interactive Map</h3>
-            <div id="map"></div>
+    <div class="container">
+        <h1>Water Quality Analysis</h1>
+        <h2>Select Date Range</h2>
+        <div class="form-group">
+            <label for="start-date">Start Date:</label>
+            <input type="date" id="start-date">
         </div>
-        <div class="chart-box">
-            <img src="./images/chart1.png" alt="Time Series Chart" class="chart-image">
+        <div class="form-group">
+            <label for="end-date">End Date:</label>
+            <input type="date" id="end-date">
         </div>
-        <div class="chart-box">
-            <img src="./images/chart2.png" alt="Time Series Chart" class="chart-image">
-        </div><div class="chart-box">
-            <img src="./images/chart3.png" alt="Time Series Chart" class="chart-image">
-        </div><div class="chart-box">
-            <img src="./images/chart4.png" alt="Time Series Chart" class="chart-image">
-        </div><div class="chart-box">
-            <img src="./images/chart5.png" alt="Time Series Chart" class="chart-image">
+        <button onclick="filterData()">Filter Data</button>
+        
+        <h2>Scatter Plot Analysis</h2>
+        <div class="form-group">
+            <label for="scatter-options">Select Scatter Plot:</label>
+            <select id="scatter-options">
+                <option value="temp-do">Temperature vs. Dissolved Oxygen</option>
+                <option value="ph-cond">pH vs. Conductivity</option>
+            </select>
+        </div>
+        <button onclick="generateScatterPlot()">Generate Plot</button>
+        <div class="chart-container">
+            <canvas id="scatterChart"></canvas>
+        </div>
+
+        <h2>Time Series Analysis</h2>
+        <div class="form-group">
+            <label for="parameter-select">Select Parameters:</label>
+            <select id="parameter-select" multiple>
+                <option value="ph">pH</option>
+                <option value="temp">Temperature</option>
+                <option value="do">Dissolved Oxygen</option>
+                <option value="bod">Biological Oxygen Demand</option>
+                <option value="tss">Total Suspended Solids</option>
+                <option value="ecoli">E. coli</option>
+            </select>
+        </div>
+        <button onclick="generateTimeSeries()">Generate Time Series</button>
+        <div class="chart-container">
+            <canvas id="timeSeriesChart"></canvas>
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        var map = L.map('map', {
-            preferCanvas: true,
-            zoomAnimation: false,
-            inertia: true
-        }).setView([43.5, -96.7], 10);
+        function filterData() {
+            const startDate = document.getElementById("start-date").value;
+            const endDate = document.getElementById("end-date").value;
+            if (new Date(startDate) > new Date(endDate)) {
+                alert("Error: Start date must be before end date.");
+            } else {
+                alert(`Data filtered from ${startDate} to ${endDate}`);
+            }
+        }
 
-        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            detectRetina: true,
-            maxZoom: 18,
-        }).addTo(map);
+        function generateScatterPlot() {
+            alert("Scatter Plot Generated");
+        }
 
-        var locations = [
-            { name: "Big Sioux River and I-90", coords: [43.610255, -96.744512] },
-            { name: "Big Sioux River @ Timberline", coords: [43.599904, -96.653107] },
-            { name: "Big Sioux River @ BAhson", coords: [43.569820, -96.684398] },
-            { name: "Skunk Creek @ Marion Road", coords: [43.533928, -96.791001] },
-            { name: "Big Sioux @ Falls Park", coords: [43.557252, -96.722152] }
-        ];
-
-        locations.forEach((location, index) => {
-            L.marker(location.coords)
-                .addTo(map)
-                .bindPopup(`<b>${location.name}</b><br>Location ${index + 1}`);
-        });
+        function generateTimeSeries() {
+            alert("Time Series Generated");
+        }
     </script>
-
 </body>
 </html>

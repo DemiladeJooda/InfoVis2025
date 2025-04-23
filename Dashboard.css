@@ -1,0 +1,374 @@
+.dashboard-card {
+  max-width: 1000px;
+  margin: 0 auto 30px auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+body {
+  background-color: #f0f2f5;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #2e2e2e;
+}
+
+.dashboard-container {
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  color: #2c2f4c;
+  font-size: 36px;
+  margin-bottom: 40px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #4c3c9c;
+  border-left: 6px solid #4c3c9c;
+  padding-left: 15px;
+  font-weight: 600;
+}
+
+.upload-section,
+.visualization-controls {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 20px;
+  margin-bottom: 30px;
+  padding: 30px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.visualization-display {
+  margin: 40px 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+button {
+  display: block;
+  margin: 20px auto 0 auto;
+}
+
+
+
+.upload-section:hover,
+.visualization-controls:hover,
+.visualization-display:hover {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+input[type="file"] {
+  font-size: 16px;
+}
+
+.control-group {
+  margin-bottom: 25px;
+}
+
+.control-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.control-group select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  background-color: #f9f9f9;
+  font-size: 16px;
+}
+
+.location-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  justify-content: center;
+}
+
+.location-checkbox {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.location-checkbox input {
+  margin-right: 6px;
+}
+
+button {
+  padding: 12px 20px;
+  background-color: #4c3c9c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #372a76;
+}
+
+button:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+}
+
+.plot-container {
+  width: 100%;
+  padding: 0; /* remove internal padding */
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: none;
+  margin: 0 auto;
+  min-height: 600px;
+  overflow: visible;
+  position: relative;
+}
+
+.plotly-graph {
+  width: 100% !important;
+  height: auto !important;
+}
+
+
+.reset-button {
+  margin-top: 20px;
+  background-color: #dc3545;
+}
+
+.reset-button:hover {
+  background-color: #c82333;
+}
+
+.upload-section::after {
+display: block;
+  color: #777;
+  font-size: 16px;
+  margin-top: 15px;
+  text-align: center;
+}
+
+
+.dashboard-container:has(.upload-section:not(:empty)):not(:has(.visualization-controls)) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+@media screen and (max-width: 768px) {
+  .dashboard-container {
+    padding: 20px;
+  }
+
+  .plot-container,
+  .upload-section,
+  .visualization-controls {
+    padding: 20px;
+    width: 100%;
+  }
+
+  .control-group select,
+  input[type="file"] {
+    width: 100%;
+  }
+}
+
+.upload-msg {
+  text-align: center;
+  font-size: 16px;
+  color: #555;
+  margin-top: 10px;
+}
+
+.brushed-panel {
+  position: fixed;
+  top: 100px;
+  right: 30px;
+  width: 320px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  z-index: 1000;
+}
+
+.brushed-panel h3 {
+  margin-top: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.brushed-panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.brushed-panel th,
+.brushed-panel td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  font-size: 14px;
+  text-align: left;
+}
+
+.brushed-panel th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+.close-panel {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.date-range-group {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  text-align: center;
+}
+
+.date-range-group label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.date-range-inputs {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  justify-content: center;
+}
+
+.date-range-inputs input[type="date"] {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 100%;
+  max-width: 180px;
+  transition: border 0.3s ease;
+}
+
+.date-range-inputs input[type="date"]:focus {
+  border-color: #6a1b9a;
+  outline: none;
+  box-shadow: 0 0 5px rgba(106, 27, 154, 0.3);
+}
+
+.filter-locations-group {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* <-- Center the label and checkboxes */
+  text-align: center;
+}
+
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: Arial, sans-serif;
+}
+
+.dashboard-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+select {
+  padding: 0.4rem 0.8rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+button.reset-button {
+  background: #007bff;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+button.reset-button:hover {
+  background-color: #0056b3;
+}
+
+button.info-button {
+  font-size: 1rem;
+  padding: 0.3rem 0.6rem;
+  border: none;
+  border-radius: 5px;
+  background: #f0f0f0;
+  color: #333;
+  cursor: pointer;
+}
+
+button.info-button:hover {
+  background-color: #e0e0e0;
+}
+
+.threshold-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media screen and (min-width: 768px) {
+  .dashboard-card {
+    transition: transform 0.3s;
+  }
+
+  .dashboard-card:hover {
+    transform: scale(1.01);
+  }
+}
