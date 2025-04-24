@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import base64
 from io import BytesIO
-
 import plotly.io as pio
 pio.templates.default = "plotly_white"
 px.set_mapbox_access_token("pk.eyJ1IjoiZGVtaWoiLCJhIjoiY205dGc5aTl5MGFsMTJpb2Zsd3d2d3hpaCJ9.Od1r9cRXwkXxwhXyvh8yqA")
@@ -24,6 +23,7 @@ def process_uploaded_csv(file_content):
     return df
 
 # Main visualization function that will be called based on user selection
+# Main visualization function that will be called based on user selection
 def generate_visualization(df, vis_type, parameter=None, location_filter=None):
     """
     Generate visualizations based on user selection
@@ -35,34 +35,45 @@ def generate_visualization(df, vis_type, parameter=None, location_filter=None):
     - location_filter: filter for specific locations
     
     Returns:
-    - encoded_fig: base64 encoded image of the visualization
-    - or fig: plotly figure object for interactive visualizations
+    - fig: plotly figure object for interactive visualizations
     """
-    
+
+    global location_name_map  # share with other functions
+
+    # Map LocationID to Location Name
+    location_name_map = {}
+    if 'LocationID' in df.columns and 'Location' in df.columns:
+        location_name_map = df.dropna(subset=['LocationID', 'Location']) \
+                              .drop_duplicates(subset='LocationID') \
+                              .set_index('LocationID')['Location'].to_dict()
+
     # Filter by location if specified
     if location_filter and 'LocationID' in df.columns:
         df = df[df['LocationID'].isin(location_filter)]
-    
-    if vis_type == "time_series":
-        return time_series_visualization(df, parameter)
-    elif vis_type == "parameter_comparison":
-        return parameter_comparison(df, parameter)
-    elif vis_type == "location_comparison":
-        return location_comparison(df, parameter)
-    elif vis_type == "map_view":
-        return map_visualization(df, parameter)
-    elif vis_type == "correlation_matrix":
-        return correlation_matrix(df)
-    elif vis_type == "box_plots":
-        return box_plots(df, parameter)
-    elif vis_type == "threshold_analysis":
-        return threshold_analysis(df, parameter)
-    elif vis_type == "seasonal_analysis":
-        return seasonal_analysis(df, parameter)
-    elif vis_type == "scatter_plot":
-        return scatterplot_comparison(df, parameter[0], parameter[1])
-    else:
-        return None
+
+    # Route to specific visualization type
+    match vis_type:
+        case "time_series":
+            return time_series_visualization(df, parameter)
+        case "parameter_comparison":
+            return parameter_comparison(df, parameter)
+        case "location_comparison":
+            return location_comparison(df, parameter)
+        case "map_view":
+            return map_visualization(df, parameter)
+        case "correlation_matrix":
+            return correlation_matrix(df)
+        case "box_plots":
+            return box_plots(df, parameter)
+        case "threshold_analysis":
+            return threshold_analysis(df, parameter)
+        case "seasonal_analysis":
+            return seasonal_analysis(df, parameter)
+        case "scatter_plot":
+            return scatterplot_comparison(df, parameter[0], parameter[1])
+        case _:
+            return None
+
 
 
 # Modified Time Series Visualization
@@ -92,7 +103,7 @@ def time_series_visualization(df, parameter):
         plot_df, 
         x='SampleDate', 
         y=parameter, 
-        color='LocationID',
+        color=df['LocationID'].map(location_name_map).fillna(df['LocationID']),
         title=f'{parameter} Over Time by Location',
         labels={parameter: parameter, 'SampleDate': 'Date'},
         line_shape='linear',  # Use linear connections between points
@@ -105,29 +116,20 @@ def time_series_visualization(df, parameter):
         line=dict(width=2)  # Thicker lines for better visibility
     )
     
-    # Improve the layout
     fig.update_layout(
-        xaxis_title='Date',
-        yaxis_title=parameter,
-        legend_title='Location ID',
-        template='plotly_white',
-        autosize=True,
-        height=600,  # Fixed height for better proportions
-        width=1000,  # Fixed width for better proportions
-        margin=dict(l=60, r=60, t=80, b=80),
-        legend=dict(
-            orientation="v",
-            yanchor="top",
-            y=0.99,
-            xanchor="right",
-            x=1.15
-        ),
-        font=dict(
-            family="Arial, sans-serif",
-            size=14  # Larger font for better readability
-        ),
-        plot_bgcolor='white'  # Ensure white background for clarity
-    )
+        height=500,
+    legend=dict(
+        orientation="h",           # horizontal legend
+        yanchor="bottom",
+        y=-0.3,                    # push below the chart
+        xanchor="center",
+        x=0.5,                     # center it
+        font=dict(size=12),
+        itemsizing='trace',
+        title_text='Location',
+    ),
+  margin=dict(t=60, b=120, l=40, r=40)      # more bottom space
+)
     
     # Improve date formatting on x-axis
     fig.update_xaxes(
@@ -150,6 +152,8 @@ def time_series_visualization(df, parameter):
     
     return fig
 
+
+
 #scatter plot 
 def scatterplot_comparison(df, x_param, y_param):
     """Create a scatter plot comparing two water quality parameters"""
@@ -164,9 +168,16 @@ def scatterplot_comparison(df, x_param, y_param):
             x=loc_data[x_param],
             y=loc_data[y_param],
             mode='markers',
-            name=location,
+            name=location_name_map.get(location, location),
             marker=dict(size=8, opacity=0.7),
-            hovertemplate=f"<b>{location}</b><br>{x_param}: %{{x}}<br>{y_param}: %{{y}}<extra></extra>"
+            hovertemplate=(
+    "<b>%{fullData.name}</b><br>" +
+    x_param + ": %{x}<br>" +
+    y_param + ": %{y}<extra></extra>"
+)
+
+
+
         ))
 
     fig.update_layout(
@@ -187,8 +198,6 @@ def scatterplot_comparison(df, x_param, y_param):
     fig.update_yaxes(gridcolor='lightgray', linewidth=1, linecolor='black', rangemode='tozero')
 
     return fig
-
-
 
 
 # Parameter Comparison - Optimized
@@ -230,13 +239,13 @@ def parameter_comparison(df, parameters):
             )
     
     fig.update_layout(
-        height=300 * len(parameters),
-        width=1000,  # Fixed width for better proportions
+        height=200 * len(parameters),  # Reduced from 300
+        width=600,  # Reduced from 1000
         title_text="Parameter Comparison Across Locations",
         legend_title="Location ID",
         template='plotly_white',
         autosize=False,  # Disable autosize for consistent rendering
-        margin=dict(l=60, r=60, t=80, b=80),
+        margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
         font=dict(
             family="Arial, sans-serif",
             size=14  # Larger font for better readability
@@ -275,7 +284,8 @@ def location_comparison(df, parameter):
     # Create the comparison bar chart
     fig = px.bar(location_stats, x='LocationID', y='mean', 
                 error_y='std',
-                color='LocationID',
+                color=df['LocationID'].map(location_name_map).fillna(df['LocationID']),
+
                 labels={'mean': f'Mean {parameter}', 'LocationID': 'Location ID'},
                 title=f'{parameter} Comparison by Location',
                 color_discrete_sequence=px.colors.qualitative.Bold)  # Bolder colors
@@ -296,9 +306,9 @@ def location_comparison(df, parameter):
         yaxis_title=f'{parameter} Value',
         template='plotly_white',
         autosize=False,
-        width=1000,
-        height=600,
-        margin=dict(l=60, r=60, t=80, b=80),
+        width=600,  # Reduced from 1000
+        height=400,  # Reduced from 600
+        margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
         font=dict(
             family="Arial, sans-serif",
             size=14
@@ -323,70 +333,82 @@ def location_comparison(df, parameter):
     )
     
     return fig
+# Map Visualization - with Debugging Print Statements
+import logging
 
-# Map Visualization - Optimized
-def map_visualization(df, parameter):
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+def map_visualization(df, parameter=None):
     """Create a map visualization of the parameter across different locations"""
+    logger.debug("Starting map visualization")
+
+    # Check required columns
+    print("Columns in dataframe:", df.columns.tolist())
     if 'Latitude' not in df.columns or 'Longitude' not in df.columns:
+        print("Missing Latitude or Longitude column!")
         return None
-    
-    # Aggregate data by location for the selected parameter
-    if parameter:
-        map_data = df.groupby(['LocationID', 'Latitude', 'Longitude'])[parameter].mean().reset_index()
-        
-        # Create a map
-        fig = px.scatter_mapbox(map_data, 
-                               lat='Latitude', 
-                               lon='Longitude', 
-                               color=parameter,
-                               size=parameter,
-                               hover_name='LocationID',
-                               zoom=10,
-                               mapbox_style='carto-positron',  # Cleaner map style
-                               color_continuous_scale=px.colors.sequential.Viridis,  # Better color scale
-                               title=f'Map View of {parameter} by Location')
-        
-        # Adjust marker appearance
-        fig.update_traces(
-            marker=dict(
-                sizemin=10,  # Minimum marker size
-                sizeref=0.1,  # Adjust size scaling
-                sizemode='area',
-                opacity=0.8,  # Slightly transparent
-            )
-        )
+
+    print("Parameter requested:", parameter)
+    if not parameter or parameter not in df.columns:
+        map_data = df[['LocationID', 'Latitude', 'Longitude']].dropna().drop_duplicates()
     else:
-        # Just show locations without parameter data
-        map_data = df[['LocationID', 'Latitude', 'Longitude']].drop_duplicates()
-        
-        fig = px.scatter_mapbox(map_data,
-                               lat='Latitude',
-                               lon='Longitude',
-                               hover_name='LocationID',
-                               zoom=10,
-                               mapbox_style='carto-positron',
-                               title='Sampling Locations Map')
-        
-        # Adjust marker appearance
-        fig.update_traces(
-            marker=dict(
-                size=15,
-                opacity=0.8,  # Slightly transparent
-            )
+        map_data = df.dropna(subset=['Latitude', 'Longitude', parameter])
+        map_data = map_data.groupby(['LocationID', 'Latitude', 'Longitude'])[parameter].mean().reset_index()
+
+    print("Preview of map_data:")
+    print(map_data.head())
+    print("Map data shape:", map_data.shape)
+
+    # Check value ranges
+    print("Latitude range:", map_data['Latitude'].min(), map_data['Latitude'].max())
+    print("Longitude range:", map_data['Longitude'].min(), map_data['Longitude'].max())
+    if parameter in map_data.columns:
+        print(f"{parameter} range:", map_data[parameter].min(), map_data[parameter].max())
+
+    # Add readable location name
+    try:
+        map_data['LocationName'] = map_data['LocationID'].map(location_name_map).fillna(map_data['LocationID'])
+    except Exception as e:
+        logger.exception("Location name mapping failed")
+        map_data['LocationName'] = map_data['LocationID']
+
+    # Fallback marker size
+    marker_size = 15 if parameter is None or parameter not in df.columns else None
+    fallback_size = [10] * len(map_data) if marker_size is None else None
+
+    try:
+        fig = px.scatter_mapbox(
+            map_data,
+            lat='Latitude',
+            lon='Longitude',
+            hover_name='LocationName',
+            color=parameter if parameter and parameter in df.columns else None,
+            size=parameter if parameter and parameter in df.columns else fallback_size,
+            zoom=4,
+            center=dict(lat=map_data['Latitude'].mean(), lon=map_data['Longitude'].mean()),
+            mapbox_style='carto-positron',
+            title=f"{parameter} Map" if parameter else "Sampling Locations Map"
         )
-    
-    fig.update_layout(
-        height=700,
-        width=1000,
-        autosize=False,
-        margin=dict(l=0, r=0, t=50, b=0),  # Reduce margins for maps
-        font=dict(
-            family="Arial, sans-serif",
-            size=14
+
+        fig.update_layout(
+            height=500,
+            width=600,
+            autosize=False,
+            margin=dict(l=40, r=40, t=50, b=0),
+            font=dict(family="Arial, sans-serif", size=14)
         )
-    )
-    
-    return fig
+
+        print("Map figure generated successfully.")
+        return fig
+
+    except Exception as e:
+        print("Map rendering failed:", e)
+        logger.exception("Failed to create scatter_mapbox plot")
+        return NoneA
+
+
+
 
 
 # Correlation Matrix - Optimized
@@ -413,8 +435,8 @@ def correlation_matrix(df):
                    title='Correlation Matrix of Water Quality Parameters')
     
     fig.update_layout(
-        width=900,
-        height=800,
+        width=600,  # Reduced from 900
+        height=600, # Reduced from 800
         autosize=False,
         coloraxis_colorbar=dict(
             title="Correlation",
@@ -455,7 +477,8 @@ def box_plots(df, parameter):
         return None
     
     fig = px.box(df, x='LocationID', y=parameter, 
-                color='LocationID',
+                color=df['LocationID'].map(location_name_map).fillna(df['LocationID']),
+
                 title=f'Distribution of {parameter} by Location',
                 points='outliers',  # Only show outlier points for cleaner look
                 color_discrete_sequence=px.colors.qualitative.Bold)
@@ -475,9 +498,9 @@ def box_plots(df, parameter):
         yaxis_title=parameter,
         template='plotly_white',
         autosize=False,
-        width=1000,
-        height=600,
-        margin=dict(l=60, r=60, t=80, b=80),
+        width=600,  # Reduced from 1000
+        height=400, # Reduced from 600
+        margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
         font=dict(
             family="Arial, sans-serif",
             size=14
@@ -504,7 +527,6 @@ def box_plots(df, parameter):
     
     return fig
 
-
 # Threshold Analysis - Optimized
 def threshold_analysis(df, parameter):
     """
@@ -514,7 +536,6 @@ def threshold_analysis(df, parameter):
     if parameter not in df.columns:
         return None
     
-    # Example thresholds (these should be replaced with actual regulatory values)
     thresholds = {
     'Ph': {'min': 6.5, 'max': 8.5, 'name': 'pH'},
     'Temperature': {'max': 32, 'name': 'Temperature (°C)'},
@@ -529,7 +550,7 @@ def threshold_analysis(df, parameter):
 
     if parameter not in thresholds:
         # Create a basic histogram if no threshold is defined
-        fig = px.histogram(df, x=parameter, color='LocationID',
+        fig = px.histogram(df, x=parameter, color=df['LocationID'].map(location_name_map).fillna(df['LocationID']),
                           title=f'Distribution of {parameter}',
                           color_discrete_sequence=px.colors.qualitative.Bold,
                           opacity=0.8,
@@ -558,7 +579,7 @@ def threshold_analysis(df, parameter):
         fig.add_trace(
             go.Histogram(
                 x=loc_data[parameter],
-                name=location,
+                name=location_name_map.get(location, location),
                 opacity=0.7,
                 marker_color=px.colors.qualitative.Bold[i % len(px.colors.qualitative.Bold)],
                 xbins=dict(size=(df[parameter].max() - df[parameter].min()) / 30),
@@ -748,7 +769,7 @@ def seasonal_analysis(df, parameter):
                 x=season_data.index,
                 y=season_data.values,
                 mode='lines+markers',
-                name=location,
+                name=location_name_map.get(location, location),
                 line=dict(width=3),  # Thicker line
                 marker=dict(
                     size=10,  # Larger markers
@@ -783,7 +804,7 @@ def seasonal_analysis(df, parameter):
                 x=loc_data['Month'],
                 y=loc_data[parameter],
                 mode='markers',
-                name=location,
+                name=location_name_map.get(location, location),
                 marker=dict(
                     size=8,
                     line=dict(width=1, color='black'),
@@ -795,12 +816,12 @@ def seasonal_analysis(df, parameter):
     
     # Improve layout
     fig.update_layout(
-        height=600,
-        width=1200,
+        height=400,  # Reduced from 600
+        width=800,   # Reduced from 1200
         title_text=f"Seasonal Analysis of {parameter}",
         template='plotly_white',
         autosize=False,
-        margin=dict(l=60, r=60, t=80, b=80),
+        margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
         font=dict(
             family="Arial, sans-serif",
             size=14
@@ -853,6 +874,75 @@ def seasonal_analysis(df, parameter):
     
     return fig
 
+def summary_statistics_visualization(df, parameter):
+    """
+    Generate only distribution plots for selected parameters
+    Adjusts to match the Dashboard.js expected format
+    """
+    # Handle the case when parameter is a string (just one parameter)
+    if isinstance(parameter, str):
+        parameters = [parameter]
+    # Handle the case when parameter is None or empty
+    elif not parameter:
+        # Choose numeric columns that are likely water quality parameters
+        exclude_cols = ['OBJECTID', 'GlobalID', 'Latitude', 'Longitude']
+        numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        parameters = [col for col in numeric_cols if col not in exclude_cols][:5]  # Limit to first 5
+    # Otherwise, assume parameter is already a list
+    else:
+        parameters = parameter
+
+    # Make sure we have at least one parameter
+    if not parameters:
+        return None
+
+    # Distribution plots for each parameter
+    dist_plots = []
+    for param in parameters:
+        fig = px.histogram(
+            df,
+            x=param,
+            nbins=40,
+            title=f'Distribution of {param}',
+            marginal="box",
+            color_discrete_sequence=['#1f77b4']
+        )
+        fig.update_layout(
+            template='plotly_white',
+            height=500,
+            width=800,
+            margin=dict(l=60, r=60, t=80, b=60),
+            font=dict(
+                family="Arial, sans-serif",
+                size=14
+            ),
+            xaxis_title=param,
+            yaxis_title="Count",
+            plot_bgcolor='white'
+        )
+        
+        # Enhanced axes
+        fig.update_xaxes(
+            gridcolor='lightgray',
+            linewidth=1,
+            linecolor='black'
+        )
+        
+        fig.update_yaxes(
+            gridcolor='lightgray',
+            linewidth=1,
+            linecolor='black',
+            rangemode='tozero'  # Start from zero
+        )
+        
+        # Convert figure to JSON directly
+        dist_plots.append(fig.to_json())
+
+    # Return the distributions directly
+    return {
+        'distributions': dist_plots
+    }
+    
 
 # Example function to convert plotly figures to base64 for embedding in React
 def fig_to_base64(fig):
@@ -863,50 +953,58 @@ def fig_to_base64(fig):
 
 
 # This function would be exposed to the React frontend
-def get_visualization(data, vis_type, parameter=None, location_filter=None,  date_range=None):
+def get_visualization(data, vis_type, parameter=None, location_filter=None, date_range=None):
     """
     Main function to be called from React frontend
-    
+
     Parameters:
     - data: CSV data as string or bytes
     - vis_type: type of visualization to generate
     - parameter: parameter to visualize
     - location_filter: optional filter for locations
-    
+    - date_range: dictionary with 'start' and 'end' keys for filtering dates
+
     Returns:
     - JSON with visualization data that can be rendered in React
     """
     df = process_uploaded_csv(data)
-    
-    if date_range and 'start' in date_range and 'end' in date_range:
-        start = pd.to_datetime(date_range['start']).tz_localize(None)
-        end = pd.to_datetime(date_range['end']).tz_localize(None)
 
-        if 'SampleDate' in df.columns:
-            df['SampleDate'] = pd.to_datetime(df['SampleDate'], errors='coerce').dt.tz_localize(None)
-            df = df[df['SampleDate'].between(start, end)]
+    if date_range and 'SampleDate' in df.columns:
+        df['SampleDate'] = pd.to_datetime(df['SampleDate'], errors='coerce').dt.tz_localize(None)
+        start = pd.to_datetime(date_range.get('start'), errors='coerce').tz_localize(None)
+        end = pd.to_datetime(date_range.get('end'), errors='coerce').tz_localize(None)
+        df = df[(df['SampleDate'] >= start) & (df['SampleDate'] <= end)]
 
-
-
-    fig = generate_visualization(df, vis_type, parameter, location_filter)
-    
-    # For React integration using Plotly.react
-    if fig:
-        return {
-            'success': True,
-            'plotlyData': fig.to_json(),
-            'config': {
-                'responsive': True,
-                'displayModeBar': True,
-                'toImageButtonOptions': {
-                    'format': 'png',
-                    'filename': f'{vis_type}_{parameter}',
-                    'scale': 2  # Higher scale for crisper downloaded images
+    if vis_type == 'summary_statistics':
+        result = summary_statistics_visualization(df, parameter)
+        if result:
+            return {
+                'success': True,
+                'distributions': result['distributions']
+            }
+        else:
+            return {
+                'success': False,
+                'error': 'Could not generate distribution plots'
+            }
+    else:
+        fig = generate_visualization(df, vis_type, parameter, location_filter)
+        if fig:
+            return {
+                'success': True,
+                'plotlyData': fig.to_json(),
+                'config': {
+                    'responsive': True,
+                    'displayModeBar': True,
+                    'toImageButtonOptions': {
+                        'format': 'png',
+                        'filename': f'{vis_type}_{parameter}',
+                        'scale': 2
+                    }
                 }
             }
-        }
-    else:
-        return {
-            'success': False,
-            'error': 'Could not generate visualization'
-        }
+        else:
+            return {
+                'success': False,
+                'error': 'Could not generate visualization'
+            }

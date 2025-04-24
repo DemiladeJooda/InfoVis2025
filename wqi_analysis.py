@@ -23,7 +23,7 @@ def compute_wqi_feature_importance(df: pd.DataFrame):
     df_norm = pd.DataFrame(X_scaled, columns=params)
     df_norm['WQI'] = df_norm.mean(axis=1)
     df_clean = df_clean.reset_index(drop=True)
-    df_clean['WQI'] = df_norm['WQI']  # Only add the new column
+    df_clean['WQI'] = df_norm['WQI']  
 
 
     model = RandomForestRegressor(n_estimators=100, random_state=42)

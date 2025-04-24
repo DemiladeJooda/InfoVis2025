@@ -2,16 +2,21 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 import json
 from visualization import get_visualization
-from wqi_analysis import compute_wqi_feature_importance
+
 import pandas as pd
+
 
 app = Flask(__name__)
 # Allow only frontend origin
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+
 
 @app.route('/')
 def index():
     return 'Backend is running'
+
+
+
 
 @app.route('/api/visualize-multiview', methods=['POST'])
 @cross_origin(origin='http://localhost:3000') 
@@ -22,9 +27,8 @@ def visualize_multiview():
 
         data = request.files['csv_file'].read()
         
-        df = pd.read_csv(pd.io.common.BytesIO(data))  # Add this to parse the uploaded file
+        df = pd.read_csv(pd.io.common.BytesIO(data)) 
 
-        
         # Define desired visualizations
         date_range = None
         location_filter = []
@@ -47,11 +51,8 @@ def visualize_multiview():
             'thresholdOverlay': json.loads(fig3['plotlyData']),
             'parameterImpactStatic': json.loads(fig_static.to_json()),
             'parameterImpactTrend': json.loads(fig_trend.to_json())
-
         }
-
         })
-
     except Exception as e:
         return jsonify(success=False, error=str(e)), 500
 
@@ -89,5 +90,7 @@ def visualize():
     except Exception as e:
         return jsonify(success=False, error=str(e)), 500
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True, port=5050)
+
