@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 import json
 from visualization import get_visualization
+from wqi_analysis import compute_wqi_feature_importance
 
 import pandas as pd
 

@@ -16,23 +16,23 @@ def compute_wqi_feature_importance(df: pd.DataFrame):
 
     df_clean = df.dropna(subset=params + ['SampleDate']).copy()
     df_clean['SampleDate'] = pd.to_datetime(df_clean['SampleDate'], errors='coerce')
-    df_clean = df_clean.dropna(subset=['SampleDate'])
+    df_clean.dropna(subset=['SampleDate'], inplace=True)
 
     scaler = MinMaxScaler()
     X_scaled = scaler.fit_transform(df_clean[params])
     df_norm = pd.DataFrame(X_scaled, columns=params)
     df_norm['WQI'] = df_norm.mean(axis=1)
-    df_clean = df_clean.reset_index(drop=True)
-    df_clean['WQI'] = df_norm['WQI']  
 
+    df_clean.reset_index(drop=True, inplace=True)
+    df_clean['WQI'] = df_norm['WQI']
 
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    # 🚀 Faster Static Importance
+    model = RandomForestRegressor(n_estimators=50, n_jobs=-1, random_state=42)
     model.fit(df_norm[params], df_norm['WQI'])
 
-    importances = model.feature_importances_
     importance_df = pd.DataFrame({
         'Parameter': params,
-        'Importance': importances
+        'Importance': model.feature_importances_
     }).sort_values(by='Importance', ascending=False)
 
     fig_static = px.bar(
@@ -46,20 +46,23 @@ def compute_wqi_feature_importance(df: pd.DataFrame):
         height=500
     )
 
+    # 📈 Optimized Time Series Importance
     df_clean['Quarter'] = df_clean['SampleDate'].dt.to_period('Q').astype(str)
     trends = []
+    shared_model = RandomForestRegressor(n_estimators=25, n_jobs=-1, random_state=42)
 
     for quarter, group in df_clean.groupby('Quarter'):
         if len(group) < 20:
             continue
-        X_q = group[params]
-        y_q = group['WQI']
         try:
-            model_q = RandomForestRegressor(n_estimators=100, random_state=42)
-            model_q.fit(X_q, y_q)
-            for i, param in enumerate(params):
-                trends.append({'Quarter': quarter, 'Parameter': param, 'Importance': model_q.feature_importances_[i]})
-        except:
+            shared_model.fit(group[params], group['WQI'])
+            importance = shared_model.feature_importances_
+            trends.extend({
+                'Quarter': quarter,
+                'Parameter': param,
+                'Importance': importance[i]
+            } for i, param in enumerate(params))
+        except Exception:
             continue
 
     df_trend = pd.DataFrame(trends)

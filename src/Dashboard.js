@@ -1,10 +1,9 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Plot from 'react-plotly.js';
 import './Dashboard.css';
 import { CsvContext } from './CsvContext';
 import Papa from 'papaparse';
-
 
 function Dashboard() {
   const { csvFile, setCsvFile } = useContext(CsvContext);
@@ -23,9 +22,76 @@ function Dashboard() {
   const [summaryData, setSummaryData] = useState(null);
   const [heatmapData, setHeatmapData] = useState(null);
   const [distributionCharts, setDistributionCharts] = useState([]);
+  const plotRefs = useRef({});
+  const cardRefs = useRef({});
 
   const navigate = useNavigate();
 
+  // Handle window resize and initial sizing
+  useEffect(() => {
+    const handleResize = () => {
+      Object.keys(plotRefs.current).forEach(visId => {
+        const plotInstance = plotRefs.current[visId]?.el;
+        const cardElement = cardRefs.current[visId];
+        
+        if (plotInstance && cardElement) {
+          // Get the width of the card container
+          const containerWidth = cardElement.clientWidth - 32; // subtract padding
+          
+          // Force the plot to resize to container width
+          if (window.Plotly && containerWidth > 0) {
+            window.Plotly.relayout(plotInstance, {
+              width: containerWidth,
+              'autosize': true
+            });
+          }
+        }
+      });
+    };
+
+    // Set up resize observer to monitor container size changes
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const visId = entry.target.dataset.visId;
+        if (visId) {
+          // Use timeout to ensure DOM has updated
+          setTimeout(() => {
+            handleResize();
+          }, 0);
+        }
+      }
+    });
+    
+    // Initial resize for all visualizations
+    setTimeout(handleResize, 100);
+    
+    // Observe all visualization cards
+    Object.keys(cardRefs.current).forEach(visId => {
+      const cardElement = cardRefs.current[visId];
+      if (cardElement) {
+        resizeObserver.observe(cardElement);
+      }
+    });
+
+    // Add window resize handler
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [visualizations]);
+
+  // Update refs when visualizations change
+  useEffect(() => {
+    // Clean up refs for visualizations that no longer exist
+    Object.keys(plotRefs.current).forEach(visId => {
+      if (!visualizations.some(vis => vis.id === visId)) {
+        delete plotRefs.current[visId];
+        delete cardRefs.current[visId];
+      }
+    });
+  }, [visualizations]);
 
   const resetVisualization = () => {
     setPlotData(null);
@@ -68,7 +134,6 @@ function Dashboard() {
     });
   };
 
-
   const handleBrushedPoints = (event, sourcePlotData) => {
     if (!event?.points?.length || !sourcePlotData) return;
   
@@ -80,24 +145,18 @@ function Dashboard() {
   
     setBrushedPoints(selected);
   };
-  
-  
-  
-  
-
-
 
   // Visualization type options
   const visTypes = [
     { value: 'time_series', label: 'Time Series' },
     { value: 'parameter_comparison', label: 'Parameter Comparison' },
     { value: 'location_comparison', label: 'Location Comparison' },
-    { value: 'map_view', label: 'Map View' },
     { value: 'correlation_matrix', label: 'Correlation Matrix' },
     { value: 'box_plots', label: 'Box Plots' },
     { value: 'threshold_analysis', label: 'Threshold Analysis' },
     { value: 'seasonal_analysis', label: 'Seasonal Analysis' },
-    { value: 'scatter_plot', label: 'Scatter Plot' }
+    { value: 'scatter_plot', label: 'Correlation Analysis' },
+    { value: 'map_view', label: 'Map View' },
   ];
 
   // Generate a unique ID for each visualization
@@ -140,7 +199,6 @@ function Dashboard() {
       }
     }
     
-
     setLoading(true);
 
     const formData = new FormData();
@@ -153,7 +211,6 @@ function Dashboard() {
       selectedVisType === 'scatter_plot' ? JSON.stringify(scatterParams) :
       selectedParam
     );
-    
     
     formData.append('date_range', JSON.stringify({
       start: isDateRangeSelected ? dateRange.start : dateBounds.min,
@@ -177,15 +234,14 @@ function Dashboard() {
 
       console.log("Visualization response:", result);
 
-if (result.plotlyData) {
-  try {
-    const parsed = JSON.parse(result.plotlyData);
-    console.log("Parsed Plotly data:", parsed);
-  } catch (err) {
-    console.error("Failed to parse plotlyData:", err);
-  }
-}
-
+      if (result.plotlyData) {
+        try {
+          const parsed = JSON.parse(result.plotlyData);
+          console.log("Parsed Plotly data:", parsed);
+        } catch (err) {
+          console.error("Failed to parse plotlyData:", err);
+        }
+      }
 
       if (result.success) {
         if (selectedVisType === 'summary_statistics') {
@@ -204,9 +260,22 @@ if (result.plotlyData) {
           setHeatmapData(null);
           setPlotData(null);
         } else {
+          const visId = generateId();
+          const parsedPlotData = JSON.parse(result.plotlyData);
+          
+          // Ensure the plot has proper layout dimensions
+          if (parsedPlotData && parsedPlotData.layout) {
+            // Set autosize to true and remove fixed width/height if present
+            parsedPlotData.layout.autosize = true;
+            
+            // Keep height for vertical sizing but let width be determined by container
+            if (parsedPlotData.layout.width) {
+              delete parsedPlotData.layout.width;
+            }
+          }
           
           const newVisualization = {
-            id: generateId(),
+            id: visId,
             type: selectedVisType,
             parameter: selectedVisType === 'scatter_plot' ? scatterParams : selectedParam,
             title: `${selectedVisType.replace(/_/g, ' ')} - ${
@@ -215,10 +284,12 @@ if (result.plotlyData) {
                 : selectedParam || 'All Parameters'
             }`,
             locations: [...selectedLocations],
-            plotData: JSON.parse(result.plotlyData)
+            plotData: parsedPlotData
           };
           
-          
+          // Initialize refs for the new visualization
+          plotRefs.current[visId] = { el: null };
+          cardRefs.current[visId] = null;
       
           setVisualizations([...visualizations, newVisualization]);
           setPlotData(newVisualization.plotData);
@@ -233,21 +304,34 @@ if (result.plotlyData) {
         alert('Error generating visualization: ' + result.error);
       }
       
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Fetch failed: ' + error.message);
-      } finally {
-        setLoading(false);
-      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Fetch failed: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Remove visualization by ID
   const removeVisualization = (id) => {
     setVisualizations(visualizations.filter(vis => vis.id !== id));
+    // Clean up the refs
+    delete plotRefs.current[id];
+    delete cardRefs.current[id];
   };
 
- 
-
+  // Save references to elements
+  const setCardRef = (el, id) => {
+    if (el && id) {
+      cardRefs.current[id] = el;
+    }
+  };
+  
+  const setPlotRef = (el, id) => {
+    if (el && id) {
+      plotRefs.current[id] = { el };
+    }
+  };
   
   return (
     <div className="dashboard-root">
@@ -256,7 +340,7 @@ if (result.plotlyData) {
         <div className="nav-actions">
           <button className="nav-btn" onClick={() => navigate("/")}>Home</button>
           <button className="nav-btn" onClick={() => navigate("/sources")}>Sources</button>
-          <button className="nav-btn" onClick={() => navigate("/multiview")}>Multiview</button>
+          <button className="nav-btn" onClick={() => navigate("/multiview")}>WQI_Analysis</button>
           <button className="nav-btn">TEMP</button>
         </div>
       </nav>
@@ -326,7 +410,6 @@ if (result.plotlyData) {
                   )
                 )}
 
-
                 <div className="control-group">
                   <label>Date Range:</label>
                   <div className="date-range-inputs">
@@ -377,31 +460,41 @@ if (result.plotlyData) {
             )}
 
             {visualizations.map(vis => (
-              <div key={vis.id} className="visualization-card">
+              <div 
+                key={vis.id} 
+                className="visualization-card" 
+                data-vis-id={vis.id}
+                ref={(el) => setCardRef(el, vis.id)}
+              >
                 <div className="visualization-header">
                   <h4>{vis.title}</h4>
                   <button className="remove-btn" onClick={() => removeVisualization(vis.id)}>✕</button>
                 </div>
 
-                <div className="plot-container" style={{ height: '500px' }}>
-                <Plot
-                  data={vis.plotData.data}
-                  layout={{
-                    ...vis.plotData.layout,
-                    height: 500, // force height
-                    autosize: false, // disable autosize
-                    dragmode: 'select',
-                    margin: { l: 40, r: 40, t: 40, b: 40 }
-                  }}
-                  config={{ responsive: true, scrollZoom: false, displayModeBar: true }}
-                  onSelected={(e) => handleBrushedPoints(e, vis.plotData)}
-                  style={{ width: '100%', height: '100%' }}
-                  className="plotly-graph"
-                />
-              </div>
-
-
-
+                <div className="plot-container" data-vis-id={vis.id}>
+                  <Plot
+                    data={vis.plotData.data}
+                    layout={{
+                      ...vis.plotData.layout,
+                      autosize: true,
+                      height: 500,
+                      margin: { l: 50, r: 50, t: 50, b: 50 },
+                      dragmode: 'zoom'
+                    }}
+                    config={{ 
+                      responsive: true, 
+                      scrollZoom: true, 
+                      displayModeBar: true
+                    }}
+                    onSelected={(e) => handleBrushedPoints(e, vis.plotData)}
+                    style={{ width: '100%', height: '100%' }}
+                    className="plotly-graph"
+                    onInitialized={(figure, graphDiv) => {
+                      setPlotRef(graphDiv, vis.id);
+                    }}
+                    useResizeHandler={true}
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -443,6 +536,5 @@ if (result.plotlyData) {
     </div>
   )
 }
-
 
 export default Dashboard;

@@ -106,8 +106,7 @@ body {
 
 /* Visualization display section */
 .visualization-section {
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -115,21 +114,20 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto;
+  justify-content: center;
+  width: 100%;
 }
 
 .visualization-card {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-  overflow: visible;
-  width: fit-content;
-  min-width: 400px;
-  max-width: 600px;
+  overflow: hidden; /* Important: contain overflow */
+  flex: 1 0 400px;  /* Allow growing but with min-width */
+  max-width: 100%;  /* Don't exceed container width */
   display: flex;
   flex-direction: column;
+  margin-bottom: 20px;
 }
 
 .visualization-header {
@@ -166,23 +164,39 @@ body {
 .plot-container {
   flex: 1;
   min-height: 500px;
-  width: fit-content;
-  padding: 8px;
+  width: 100%;  /* Fill the width of parent */
+  padding: 16px;
   background-color: white;
   border-radius: 0 0 8px 8px;
   box-sizing: border-box;
   position: relative;
-  overflow: visible;
+  overflow: hidden; /* Important: contain overflow */
 }
 
+/* Target the main Plotly container */
 .plot-container .js-plotly-plot {
-  position: relative;
   width: 100% !important;
-  max-height: 200px; 
-  overflow-y: auto;
-  /* height: 100% !important; */
 }
 
+/* Target the SVG container */
+.plot-container .js-plotly-plot .svg-container {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Target the main plot div */
+.plot-container .js-plotly-plot .plot-container {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Target the main SVG element */
+.plot-container .js-plotly-plot svg {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Keep the legend scrollable */
 .plot-container .js-plotly-plot .legend {
   max-height: 200px;
   overflow-y: auto;
@@ -191,10 +205,8 @@ body {
   padding: 4px;
 }
 
-
 .empty-state {
-  width: fit-content;
-  min-width: 400px;
+  width: 100%;
   max-width: 600px;
   text-align: center;
   padding: 60px 20px;
@@ -265,7 +277,7 @@ body {
 
 .control-group label {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   font-weight: 500;
   font-size: 12px;
 }
@@ -313,4 +325,61 @@ body {
 .generate-btn:disabled {
   background-color: #a599e0;
   cursor: not-allowed;
+}
+
+/* Brushed points panel */
+.brushed-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+  max-width: 400px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.brushed-panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.brushed-panel th, .brushed-panel td {
+  border: 1px solid #eee;
+  padding: 6px 10px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.brushed-panel th {
+  background-color: #f5f7f9;
+}
+
+.close-panel {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #999;
+}
+
+.close-panel:hover {
+  color: #333;
+}
+
+.reset-button {
+  background-color: #6150BD;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 16px;
 }

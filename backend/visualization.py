@@ -105,7 +105,7 @@ def time_series_visualization(df, parameter):
         y=parameter, 
         color=df['LocationID'].map(location_name_map).fillna(df['LocationID']),
         title=f'{parameter} Over Time by Location',
-        labels={parameter: parameter, 'SampleDate': 'Date'},
+        labels={parameter: parameter, 'SampleDate': ''},
         line_shape='linear',  # Use linear connections between points
         render_mode='svg'  # Use SVG for crisper lines
     )
@@ -181,7 +181,7 @@ def scatterplot_comparison(df, x_param, y_param):
         ))
 
     fig.update_layout(
-        title=f'{y_param} vs {x_param} by Location',
+        #title=f'{y_param} vs {x_param} by Location',
         xaxis_title=x_param,
         yaxis_title=y_param,
         template='plotly_white',
@@ -272,66 +272,67 @@ def parameter_comparison(df, parameters):
     return fig
 
 
-# Location Comparison - Optimized
 def location_comparison(df, parameter):
     """Compare a parameter across different locations"""
     if parameter not in df.columns or 'LocationID' not in df.columns:
         return None
-    
+
     # Group by location and calculate stats
     location_stats = df.groupby('LocationID')[parameter].agg(['mean', 'std', 'min', 'max']).reset_index()
-    
-    # Create the comparison bar chart
-    fig = px.bar(location_stats, x='LocationID', y='mean', 
-                error_y='std',
-                color=df['LocationID'].map(location_name_map).fillna(df['LocationID']),
 
-                labels={'mean': f'Mean {parameter}', 'LocationID': 'Location ID'},
-                title=f'{parameter} Comparison by Location',
-                color_discrete_sequence=px.colors.qualitative.Bold)  # Bolder colors
-    
-    # Add min/max as markers
+    # Add human-readable location name
+    location_stats['LocationName'] = location_stats['LocationID'].map(location_name_map).fillna(location_stats['LocationID'])
+
+    # Create the comparison bar chart
+    fig = px.bar(
+        location_stats,
+        x='LocationID',
+        y='mean',
+        error_y='std',
+        color='LocationName',
+        labels={'mean': f'Mean {parameter}', 'LocationID': 'Location ID'},
+        title=f'{parameter} Comparison by Location',
+        color_discrete_sequence=px.colors.qualitative.Bold
+    )
+
+#Add min/max markers
     for i, row in location_stats.iterrows():
         fig.add_trace(go.Scatter(
             x=[row['LocationID'], row['LocationID']],
             y=[row['min'], row['max']],
             mode='markers',
-            marker=dict(symbol=['triangle-down', 'triangle-up'], size=12, line=dict(width=1, color='black')),  # Larger markers with outline
+            marker=dict(symbol=['triangle-down', 'triangle-up'], size=12, line=dict(width=1, color='black')),
             name=f"{row['LocationID']} Min/Max",
             showlegend=False
         ))
-    
+
     fig.update_layout(
-        xaxis_title='Location ID',
+        #xaxis_title='Location ID',
         yaxis_title=f'{parameter} Value',
         template='plotly_white',
         autosize=False,
-        width=600,  # Reduced from 1000
-        height=400,  # Reduced from 600
-        margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
-        font=dict(
-            family="Arial, sans-serif",
-            size=14
-        ),
+        width=600,
+        height=400,
+        margin=dict(l=40, r=40, t=60, b=40),
+        font=dict(family="Arial, sans-serif", size=14),
         plot_bgcolor='white',
-        bargap=0.3  # Adjust bar spacing
+        bargap=0.3
     )
-    
-    # Update axes
+
     fig.update_xaxes(
         gridcolor='lightgray',
         linewidth=1,
         linecolor='black',
-        type='category'  # Ensure categorical x-axis
+        type='category'
     )
-    
+
     fig.update_yaxes(
         gridcolor='lightgray',
         linewidth=1,
         linecolor='black',
-        rangemode='tozero'  # Start from zero
+        rangemode='tozero'
     )
-    
+
     return fig
 # Map Visualization - with Debugging Print Statements
 import logging
@@ -405,7 +406,7 @@ def map_visualization(df, parameter=None):
     except Exception as e:
         print("Map rendering failed:", e)
         logger.exception("Failed to create scatter_mapbox plot")
-        return NoneA
+        return None
 
 
 
@@ -433,6 +434,23 @@ def correlation_matrix(df):
                    zmin=-1,  # Fixed scale for correlations
                    zmax=1,
                    title='Correlation Matrix of Water Quality Parameters')
+    # Pull the axes labels closer to axes
+    fig.update_xaxes(
+        title_standoff=5,  # Reduce distance between axis and title
+        tickangle=-45,     # Rotate labels for better readability
+        showline=True,     # Show axis line
+        linecolor='black', # Color of axis line
+        ticks="outside",   # Place ticks outside
+        ticklen=5          # Length of tick marks
+    )
+
+    fig.update_yaxes(
+        title_standoff=5,  # Reduce distance between axis and title
+        showline=True,     # Show axis line
+        linecolor='black', # Color of axis line
+        ticks="outside",   # Place ticks outside
+        ticklen=5          # Length of tick marks
+    )
     
     fig.update_layout(
         width=600,  # Reduced from 900
@@ -494,7 +512,7 @@ def box_plots(df, parameter):
     )
     
     fig.update_layout(
-        xaxis_title='Location ID',
+        #xaxis_title='Location ID',
         yaxis_title=parameter,
         template='plotly_white',
         autosize=False,
@@ -527,7 +545,6 @@ def box_plots(df, parameter):
     
     return fig
 
-# Threshold Analysis - Optimized
 def threshold_analysis(df, parameter):
     """
     Analyze parameter data against regulatory thresholds
@@ -537,20 +554,21 @@ def threshold_analysis(df, parameter):
         return None
     
     thresholds = {
-    'Ph': {'min': 6.5, 'max': 8.5, 'name': 'pH'},
-    'Temperature': {'max': 32, 'name': 'Temperature (°C)'},
-    'DissolvedOxygen': {'min': 5.0, 'name': 'Dissolved Oxygen (mg/L)'},
-    'Conductivity': {'max': 1500, 'name': 'Conductivity (μS/cm)'},
-    'BiologicalOxygenDemand': {'max': 5.0, 'name': 'BOD (mg/L)'},
-    'TotalSuspendedSolids': {'max': 50.0, 'name': 'TSS (mg/L)'},
-    'EColi': {'max': 126, 'name': 'E. coli (CFU/100mL)'},
-    'Ammonia': {'max': 1.0, 'name': 'Ammonia (mg/L)'},
-    'Nitrate': {'max': 10.0, 'name': 'Nitrate (mg/L)'}
-}
+        'Ph': {'min': 6.5, 'max': 8.5, 'name': 'pH'},
+        'Temperature': {'max': 32, 'name': 'Temperature (°C)'},
+        'DissolvedOxygen': {'min': 5.0, 'name': 'Dissolved Oxygen (mg/L)'},
+        'Conductivity': {'max': 1500, 'name': 'Conductivity (μS/cm)'},
+        'BiologicalOxygenDemand': {'max': 5.0, 'name': 'BOD (mg/L)'},
+        'TotalSuspendedSolids': {'max': 50.0, 'name': 'TSS (mg/L)'},
+        'EColi': {'max': 126, 'name': 'E. coli (CFU/100mL)'},
+        'Ammonia': {'max': 1.0, 'name': 'Ammonia (mg/L)'},
+        'Nitrate': {'max': 10.0, 'name': 'Nitrate (mg/L)'}
+    }
 
     if parameter not in thresholds:
         # Create a basic histogram if no threshold is defined
-        fig = px.histogram(df, x=parameter, color=df['LocationID'].map(location_name_map).fillna(df['LocationID']),
+        fig = px.histogram(df, x=parameter, 
+                          color='LocationID',  # Use LocationID directly instead of mapping
                           title=f'Distribution of {parameter}',
                           color_discrete_sequence=px.colors.qualitative.Bold,
                           opacity=0.8,
@@ -558,30 +576,38 @@ def threshold_analysis(df, parameter):
         
         fig.update_layout(
             bargap=0.1,  # Gap between bars
-            width=1000,
-            height=600
+            width=700,
+            height=500
         )
         return fig
     
     # Create a figure with a histogram and threshold lines
     fig = make_subplots(
-    rows=2,
-    cols=1,
-    shared_xaxes=False,
-    row_heights=[0.75, 0.25],
-    vertical_spacing=0.12,
-    specs=[[{}], [{"type": "table"}]]
-)
+        rows=2,
+        cols=1,
+        shared_xaxes=False,
+        row_heights=[0.75, 0.25],
+        vertical_spacing=0.12,
+        specs=[[{}], [{"type": "table"}]]
+    )
+    
+    # Get unique locations (limit to reasonable number to avoid performance issues)
+    locations = df['LocationID'].unique()
+    if len(locations) > 10:  # Limit to 10 locations if there are too many
+        locations = locations[:10]
     
     # Add histograms for each location
-    for i, location in enumerate(df['LocationID'].unique()):
+    colors = px.colors.qualitative.Bold  # Get color palette
+    for i, location in enumerate(locations):
         loc_data = df[df['LocationID'] == location]
+        color_idx = i % len(colors)  # Ensure we don't run out of colors
+        
         fig.add_trace(
             go.Histogram(
                 x=loc_data[parameter],
-                name=location_name_map.get(location, location),
+                name=location_name_map.get(location, str(location)),
                 opacity=0.7,
-                marker_color=px.colors.qualitative.Bold[i % len(px.colors.qualitative.Bold)],
+                marker_color=colors[color_idx],
                 xbins=dict(size=(df[parameter].max() - df[parameter].min()) / 30),
                 autobinx=False
             ),
@@ -589,129 +615,99 @@ def threshold_analysis(df, parameter):
             col=1
         )
 
+    # Update layout before calculating y_max
     fig.update_layout(
-        title=f'Threshold Analysis for {thresholds[parameter]["name"]}',
-        xaxis_title=thresholds[parameter]['name'],
+        #xaxis_title=thresholds[parameter]['name'],
         yaxis_title='Count',
         template='plotly_white',
         barmode='overlay',
         bargap=0.1,
-        width=1000,
-        height=850,
+        width=700,
+        height=600,
         margin=dict(l=60, r=60, t=80, b=80),
         font=dict(family="Arial, sans-serif", size=14),
         plot_bgcolor='white',
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
 
-        # Force layout computation to get final y-axis range
-    fig_for_ymax = fig.full_figure_for_development()
-    y_max = fig_for_ymax.layout.yaxis.range[1]
-
-        # Draw vertical threshold lines properly within y-axis bounds
+    # First pass to get the maximum y value
+    # This is a simplified approach - in real-world code, you might calculate this differently
+    y_max = 20  # Default estimate
+    
+    # Draw vertical threshold lines
     if 'min' in thresholds[parameter]:
-            min_val = thresholds[parameter]['min']
-            fig.add_shape(
-                type="line", x0=min_val, x1=min_val, y0=0, y1=y_max,
-                xref="x1", yref="y1",
-                line=dict(dash="dash", color="red", width=3)
-            )
-            fig.add_annotation(
-                x=min_val, y=y_max,
-                text="Min Threshold",
-                showarrow=False,
-                yanchor="bottom",
-                font=dict(size=12, color="black"),
-                xref="x1", yref="y1"
-            )
+        min_val = thresholds[parameter]['min']
+        fig.add_shape(
+            type="line", x0=min_val, x1=min_val, y0=0, y1=y_max,
+            xref="x1", yref="y1",
+            line=dict(dash="dash", color="red", width=3)
+        )
+        fig.add_annotation(
+            x=min_val, y=y_max * 0.95,  # Position slightly below top
+            text="Min Threshold",
+            showarrow=False,
+            yanchor="bottom",
+            font=dict(size=12, color="red"),
+            xref="x1", yref="y1"
+        )
 
     if 'max' in thresholds[parameter]:
-            max_val = thresholds[parameter]['max']
-            fig.add_shape(
-                type="line", x0=max_val, x1=max_val, y0=0, y1=y_max,
-                xref="x1", yref="y1",
-                line=dict(dash="dash", color="black", width=3)
-            )
-            fig.add_annotation(
-                x=max_val, y=y_max,
-                text="Max Threshold",
-                showarrow=False,
-                yanchor="bottom",
-                font=dict(size=12, color="red"),
-                xref="x1", yref="y1"
-            )
-
-
-        
-    
+        max_val = thresholds[parameter]['max']
+        fig.add_shape(
+            type="line", x0=max_val, x1=max_val, y0=0, y1=y_max,
+            xref="x1", yref="y1",
+            line=dict(dash="dash", color="black", width=3)
+        )
+        fig.add_annotation(
+            x=max_val, y=y_max * 0.95,  # Position slightly below top
+            text="Max Threshold",
+            showarrow=False,
+            yanchor="bottom",
+            font=dict(size=12, color="red"),
+            xref="x1", yref="y1"
+        )
     # Calculate exceedance percentages
     exceedance_data = []
-    for loc in df['LocationID'].unique():
+    for loc in locations:  # Use the same limited location set
         loc_data = df[df['LocationID'] == loc]
         result = {'LocationID': loc}
         if 'min' in thresholds.get(parameter, {}):
-            result['Below_Min (%)'] = (loc_data[parameter] < thresholds[parameter]['min']).mean() * 100
+            below_min = (loc_data[parameter] < thresholds[parameter]['min']).mean() * 100
+            result['Below_Min (%)'] = round(below_min, 1)
         if 'max' in thresholds.get(parameter, {}):
-            result['Above_Max (%)'] = (loc_data[parameter] > thresholds[parameter]['max']).mean() * 100
+            above_max = (loc_data[parameter] > thresholds[parameter]['max']).mean() * 100
+            result['Above_Max (%)'] = round(above_max, 1)
         exceedance_data.append(result)
     
-    # Create a subplot for exceedance percentages
+    # Create a DataFrame for exceedance percentages
     exceedance_df = pd.DataFrame(exceedance_data)
     
     # Add a table with exceedance percentages
     if not exceedance_df.empty:
-        exceedance_df = exceedance_df.round(1)  # Round to 1 decimal place
         cols = list(exceedance_df.columns)
         
         # Add table below histogram
         fig.add_trace(
-    go.Table(
-        header=dict(
-            values=cols,
-            fill_color='paleturquoise',
-            align='left',
-            font=dict(size=14, color='black'),
-            line=dict(color='black', width=1)
-        ),
-        cells=dict(
-            values=[exceedance_df[col] for col in cols],
-            fill_color='lavender',
-            align='left',
-            font=dict(size=13),
-            line=dict(color='white', width=1),
-            height=30
+            go.Table(
+                header=dict(
+                    values=cols,
+                    fill_color='paleturquoise',
+                    align='left',
+                    font=dict(size=14, color='black'),
+                    line=dict(color='black', width=1)
+                ),
+                cells=dict(
+                    values=[exceedance_df[col].tolist() for col in cols],  # Convert to list to ensure same length
+                    fill_color='lavender',
+                    align='left',
+                    font=dict(size=13),
+                    line=dict(color='white', width=1),
+                    height=30
+                )
+            ),
+            row=2,
+            col=1
         )
-    ),
-    row=2,
-    col=1
-)
-
-    
-    # Improve layout
-    fig.update_layout(
-        title=f'Threshold Analysis for {thresholds[parameter]["name"]}',
-        xaxis_title=thresholds[parameter]['name'],
-        yaxis_title='Count',
-        template='plotly_white',
-        barmode='overlay',
-        bargap=0.1,
-        width=1000,
-        height=850,
-        # autosize=False,
-        margin=dict(l=60, r=60, t=80, b=80),
-        font=dict(
-            family="Arial, sans-serif",
-            size=14
-        ),
-        plot_bgcolor='white',
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
-    )
     
     # Update axes
     fig.update_xaxes(
@@ -728,7 +724,6 @@ def threshold_analysis(df, parameter):
     )
     
     return fig
-
 
 # Seasonal Analysis - Optimized
 def seasonal_analysis(df, parameter):
@@ -749,10 +744,10 @@ def seasonal_analysis(df, parameter):
     # Create seasonal subplot figure
     fig = make_subplots(
         rows=1, cols=2, 
-        subplot_titles=(
-            f'Seasonal Patterns of {parameter}', 
-            f'Monthly Patterns of {parameter}'
-        ),
+        # subplot_titles=(
+        #     f'Seasonal Patterns of {parameter}', 
+        #     f'Monthly Patterns of {parameter}'
+        # ),
         horizontal_spacing=0.1
     )
     
@@ -818,7 +813,6 @@ def seasonal_analysis(df, parameter):
     fig.update_layout(
         height=400,  # Reduced from 600
         width=800,   # Reduced from 1200
-        title_text=f"Seasonal Analysis of {parameter}",
         template='plotly_white',
         autosize=False,
         margin=dict(l=40, r=40, t=60, b=40),  # Reduced margins
@@ -916,7 +910,7 @@ def summary_statistics_visualization(df, parameter):
                 family="Arial, sans-serif",
                 size=14
             ),
-            xaxis_title=param,
+            #xaxis_title=param,
             yaxis_title="Count",
             plot_bgcolor='white'
         )

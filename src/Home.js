@@ -4,6 +4,82 @@ import { useNavigate } from 'react-router-dom';
 import EpaGuidelinesTable from './EpaGuidelinesTable'; // Accepts waterwayType as prop
 import React, {useState, useEffect, useRef} from 'react'
 import vantaWavesMin from 'vanta/dist/vanta.waves.min.js';
+//Water Quality Parameters
+const waterQualityData = [
+
+  {
+
+    parameter: 'pH',
+
+    description: `pH measures the acidity or alkalinity of water on a scale from 0 to 14, with 7 being neutral. For rivers and streams, a pH range of 6.5 to 8.5 is generally considered optimal for supporting aquatic life. Values outside this range can indicate pollution and may harm organisms sensitive to acidic or basic environments.`
+
+  },
+
+  {
+
+    parameter: 'Temperature',
+
+    description: `Water temperature significantly affects chemical and biological processes in aquatic systems. Warmer water holds less dissolved oxygen, which can stress or even kill fish and other organisms. Temperature also influences the metabolism and reproductive cycles of aquatic life.`
+
+  },
+
+  {
+
+    parameter: 'Dissolved Oxygen (DO)',
+
+    description: `Dissolved oxygen refers to the amount of oxygen available in water for aquatic organisms to breathe. Healthy streams typically have a DO concentration of ≥5 mg/L. Levels below this can lead to hypoxia, stressing or killing aquatic life.`
+
+  },
+
+  {
+
+    parameter: 'Conductivity',
+
+    description: `Conductivity is a measure of the water’s ability to conduct electricity, which correlates with the concentration of dissolved salts and inorganic materials. High conductivity can signal contamination from agricultural runoff or road salts.`
+
+  },
+
+  {
+
+    parameter: 'Biological Oxygen Demand (BOD)',
+
+    description: `BOD measures the amount of oxygen needed by microorganisms to decompose organic matter in water. High BOD values suggest high levels of organic pollution, often from sewage or agricultural runoff.`
+
+  },
+
+  {
+
+    parameter: 'Total Suspended Solids (TSS)',
+
+    description: `TSS refers to particles suspended in water, such as silt and organic matter. High TSS reduces water clarity, clogs fish gills, and can smother benthic habitats. Common sources include erosion and urban runoff.`
+
+  },
+
+  {
+
+    parameter: 'E. coli',
+
+    description: `E. coli is used as an indicator of fecal contamination. Acceptable concentrations are typically ≤126 CFU/100mL. High levels suggest contamination from sewage or animal waste, posing health risks.`
+
+  },
+
+  {
+
+    parameter: 'Ammonia',
+
+    description: `Ammonia exists in ionized and un-ionized forms, the latter being highly toxic to aquatic life. It originates from agricultural runoff, sewage, and decomposing organic matter.`
+
+  },
+
+  {
+
+    parameter: 'Nitrate',
+
+    description: `Nitrate is an essential nutrient that becomes a pollutant at high concentrations, often from fertilizers and septic systems. It can lead to eutrophication and oxygen depletion.`
+
+  }
+
+];
 
 const WaveComponent = (options = {}) => {
   const navigate = useNavigate();
@@ -68,6 +144,17 @@ export default function Home() {
     return () => observer.disconnect();
   }, [activeEpaTab]);
 
+  //Tab settings for table
+  const [openTab, setOpenTab] = useState(null);
+
+ 
+
+  const toggleTab = (index) => {
+
+    setOpenTab(openTab === index ? null : index);
+
+  };
+
   return (
     <div className="App">
       
@@ -83,8 +170,49 @@ export default function Home() {
       </div>
 
       <div id="parameters-content" className="section">
-        <h2>Water Quality Parameters</h2>
-        <p>Details on water quality measurement parameters.</p>
+      <h3>Water Quality Parameters</h3>
+
+        <table className="sources-table">
+
+          <tbody>
+
+            {waterQualityData.map((item, index) => (
+
+              <tr key={index}>
+
+                <td className="source-index" onClick={() => toggleTab(index)}>
+
+                  {openTab === index ? '-' : '+'}
+
+                </td>
+
+                <td className="source-link">
+
+                  <span onClick={() => toggleTab(index)} style={{ cursor: 'pointer' }}>
+
+                    {item.parameter}
+
+                  </span>
+
+                  {openTab === index && (
+
+                    <div className="mt-2">
+
+                      <p>{item.description}</p>
+
+                    </div>
+
+                  )}
+
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
       </div>
 
       <div id="epa-content" className="section">
