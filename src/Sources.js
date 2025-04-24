@@ -1,8 +1,12 @@
 // src/Sources.js
 import React from 'react';
 import './Sources.css';
+import './Dashboard.css';
+import { useNavigate } from 'react-router-dom';
 
 const Sources = () => {
+  const navigate = useNavigate();
+
   const sourceList = [
     { name: 'EPA National Recommended Criteria', url: 'https://www.epa.gov/wqc/national-recommended-water-quality-criteria' },
     { name: 'EPA Aquatic Life Criteria', url: 'https://www.epa.gov/wqc/aquatic-life-criteria' },
@@ -32,23 +36,35 @@ const Sources = () => {
   ];
 
   return (
-    <footer className="sources-footer">
-      <h3>General Sources</h3>
-      <table className="sources-table">
-        <tbody>
-          {sourceList.map((src, idx) => (
-            <tr key={idx}>
-              <td className="source-index">{idx + 1}</td>
-              <td className="source-link">
-                <a href={src.url} target="_blank" rel="noopener noreferrer">
-                  {src.name}
-                </a>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </footer>
+    <div>
+      <nav className="nav-bar" style={{width: '100vw', marginLeft: 'calc(-50vw + 50%)'}}>
+        <div className="nav-title">Water Quality Dashboard</div>
+        <div className="nav-actions">
+          <button className="nav-btn" onClick={() => navigate("/")}>Home</button>
+          <button className="nav-btn" onClick={() => navigate("/dashboard")}>Dashboard</button>
+          <button className="nav-btn">TEMP</button>
+          <button className="nav-btn">TEMP</button>
+        </div>
+      </nav>
+
+      <footer className="sources-footer">
+        <h3>General Sources</h3>
+        <table className="sources-table">
+          <tbody>
+            {sourceList.map((src, idx) => (
+              <tr key={idx}>
+                <td className="source-index">{idx + 1}</td>
+                <td className="source-link">
+                  <a href={src.url} target="_blank" rel="noopener noreferrer">
+                    {src.name}
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </footer>
+    </div>
   );
 };
 
