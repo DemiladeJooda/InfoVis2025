@@ -17,6 +17,7 @@ body {
   align-items: center;
   text-align: center;
   font-size: 25px;
+  color:aliceblue;
 }
 
 .list-container {
@@ -37,6 +38,7 @@ body {
   width: 400px;
   border-radius: 10px;
   margin-bottom: 10px;
+  color:aliceblue;
   
 }
 .App .list-div:hover {

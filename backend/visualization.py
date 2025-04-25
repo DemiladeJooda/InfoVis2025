@@ -334,83 +334,115 @@ def location_comparison(df, parameter):
     )
 
     return fig
-# Map Visualization - with Debugging Print Statements
-import logging
+# # Map Visualization - with Debugging Print Statements
+# import logging
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+# logging.basicConfig(level=logging.DEBUG)
+# logger = logging.getLogger(__name__)
 
-def map_visualization(df, parameter=None):
-    """Create a map visualization of the parameter across different locations"""
-    logger.debug("Starting map visualization")
+# def map_visualization(df, parameter=None):
+#     """Create a map visualization of the parameter across different locations"""
+#     logger.debug("Starting map visualization")
 
-    # Check required columns
-    print("Columns in dataframe:", df.columns.tolist())
-    if 'Latitude' not in df.columns or 'Longitude' not in df.columns:
-        print("Missing Latitude or Longitude column!")
-        return None
+#     # Check required columns
+#     print("Columns in dataframe:", df.columns.tolist())
+#     if 'Latitude' not in df.columns or 'Longitude' not in df.columns:
+#         print("Missing Latitude or Longitude column!")
+#         return None
 
-    print("Parameter requested:", parameter)
-    if not parameter or parameter not in df.columns:
-        map_data = df[['LocationID', 'Latitude', 'Longitude']].dropna().drop_duplicates()
-    else:
-        map_data = df.dropna(subset=['Latitude', 'Longitude', parameter])
-        map_data = map_data.groupby(['LocationID', 'Latitude', 'Longitude'])[parameter].mean().reset_index()
+#     print("Parameter requested:", parameter)
+#     if not parameter or parameter not in df.columns:
+#         map_data = df[['LocationID', 'Latitude', 'Longitude']].dropna().drop_duplicates()
+#     else:
+#         map_data = df.dropna(subset=['Latitude', 'Longitude', parameter])
+#         map_data = map_data.groupby(['LocationID', 'Latitude', 'Longitude'])[parameter].mean().reset_index()
 
-    print("Preview of map_data:")
-    print(map_data.head())
-    print("Map data shape:", map_data.shape)
+#     print("Preview of map_data:")
+#     print(map_data.head())
+#     print("Map data shape:", map_data.shape)
 
-    # Check value ranges
-    print("Latitude range:", map_data['Latitude'].min(), map_data['Latitude'].max())
-    print("Longitude range:", map_data['Longitude'].min(), map_data['Longitude'].max())
-    if parameter in map_data.columns:
-        print(f"{parameter} range:", map_data[parameter].min(), map_data[parameter].max())
+#     # Check value ranges
+#     print("Latitude range:", map_data['Latitude'].min(), map_data['Latitude'].max())
+#     print("Longitude range:", map_data['Longitude'].min(), map_data['Longitude'].max())
+#     if parameter in map_data.columns:
+#         print(f"{parameter} range:", map_data[parameter].min(), map_data[parameter].max())
 
-    # Add readable location name
-    try:
-        map_data['LocationName'] = map_data['LocationID'].map(location_name_map).fillna(map_data['LocationID'])
-    except Exception as e:
-        logger.exception("Location name mapping failed")
-        map_data['LocationName'] = map_data['LocationID']
+#     # Add readable location name
+#     try:
+#         map_data['LocationName'] = map_data['LocationID'].map(location_name_map).fillna(map_data['LocationID'])
+#     except Exception as e:
+#         logger.exception("Location name mapping failed")
+#         map_data['LocationName'] = map_data['LocationID']
 
-    # Fallback marker size
-    marker_size = 15 if parameter is None or parameter not in df.columns else None
-    fallback_size = [10] * len(map_data) if marker_size is None else None
+#     # Fallback marker size
+#     marker_size = 15 if parameter is None or parameter not in df.columns else None
+#     fallback_size = [10] * len(map_data) if marker_size is None else None
 
-    try:
-        fig = px.scatter_mapbox(
-            map_data,
-            lat='Latitude',
-            lon='Longitude',
-            hover_name='LocationName',
-            color=parameter if parameter and parameter in df.columns else None,
-            size=parameter if parameter and parameter in df.columns else fallback_size,
-            zoom=4,
-            center=dict(lat=map_data['Latitude'].mean(), lon=map_data['Longitude'].mean()),
-            mapbox_style='carto-positron',
-            title=f"{parameter} Map" if parameter else "Sampling Locations Map"
-        )
+#     try:
+#         print("Center:", map_data['Latitude'].mean(), map_data['Longitude'].mean())
 
-        fig.update_layout(
-            height=500,
-            width=600,
-            autosize=False,
-            margin=dict(l=40, r=40, t=50, b=0),
-            font=dict(family="Arial, sans-serif", size=14)
-        )
+#         fig = px.scatter_mapbox(
+#             map_data,
+#             lat='Latitude',
+#             lon='Longitude',
+#             hover_name='LocationName',
+#             color=parameter if parameter and parameter in df.columns else None,
+#             size=parameter if parameter and parameter in df.columns else fallback_size,
+#             zoom=4,
+#             center=dict(lat=map_data['Latitude'].mean(), lon=map_data['Longitude'].mean()),
+#             #mapbox_style='carto-positron',
+#             mapbox_style='open-street-map',
+#             title=f"{parameter} Map" if parameter else "Sampling Locations Map"
+#         )
 
-        print("Map figure generated successfully.")
-        return fig
+#         fig.update_layout(
+#             height=500,
+#             width=600,
+#             autosize=False,
+#             margin=dict(l=40, r=40, t=50, b=0),
+#             font=dict(family="Arial, sans-serif", size=14)
+#         )
 
-    except Exception as e:
-        print("Map rendering failed:", e)
-        logger.exception("Failed to create scatter_mapbox plot")
-        return None
+#         print("Map figure generated successfully.")
+#         return fig
+
+#     except Exception as e:
+#         print("Map rendering failed:", e)
+#         logger.exception("Failed to create scatter_mapbox plot")
+#         return None
 
 
 
 
+import plotly.graph_objects as go
+
+def map_visualization(df=None, parameter=None):
+    # Hardcoded preview data
+    latitudes = [43.610255, 43.599904, 43.569820, 43.533928, 43.557252]
+    longitudes = [-96.744512, -96.653107, -96.684398, -96.791001, -96.722152]
+    locations = ['26C', '26B', '26A', '26D', '26E']
+
+    fig = go.Figure(go.Scattermapbox(
+        lat=latitudes,
+        lon=longitudes,
+        mode='markers+text',
+        marker=go.scattermapbox.Marker(size=14, color="blue"),
+        text=locations,
+        textposition="top center"
+    ))
+
+    fig.update_layout(
+        mapbox=dict(
+            style='open-street-map',  # or 'carto-positron' if token works
+            center=dict(lat=43.5742318, lon=-96.719034),
+            zoom=10
+        ),
+        height=500,
+        margin=dict(l=20, r=20, t=50, b=20),
+        title="Sampling Locations Map"
+    )
+
+    return fig
 
 # Correlation Matrix - Optimized
 def correlation_matrix(df):
